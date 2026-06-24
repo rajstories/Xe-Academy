@@ -13,6 +13,12 @@ import CreatorLiveSessions from './CreatorLiveSessions';
 import LiveStudio from './LiveStudio';
 import CourseBuilder from './CourseBuilder';
 import AdminDashboard from './AdminDashboard';
+import AdminUsers from './AdminUsers';
+import AdminCreators from './AdminCreators';
+import AdminCourses from './AdminCourses';
+import AdminPayments from './AdminPayments';
+import AdminAnalytics from './AdminAnalytics';
+import AdminReports from './AdminReports';
 import RoleSwitcher from './RoleSwitcher';
 import Community from './Community';
 import Settings from './Settings';
@@ -106,12 +112,12 @@ export function DashboardApp() {
     } else if (currentRouteRole === 'admin') {
       switch (currentView) {
         case 'dashboard': return <AdminDashboard setView={setActiveView} />;
-        case 'users': return <div className="p-8 flex items-center justify-center text-slate-500 h-full text-lg">Users management module coming soon.</div>;
-        case 'creators': return <div className="p-8 flex items-center justify-center text-slate-500 h-full text-lg">Creators management module coming soon.</div>;
-        case 'courses': return <div className="p-8 flex items-center justify-center text-slate-500 h-full text-lg">Platform Courses module coming soon.</div>;
-        case 'payments': return <div className="p-8 flex items-center justify-center text-slate-500 h-full text-lg">Payments module coming soon.</div>;
-        case 'analytics': return <div className="p-8 flex items-center justify-center text-slate-500 h-full text-lg">Platform Analytics coming soon.</div>;
-        case 'reports': return <div className="p-8 flex items-center justify-center text-slate-500 h-full text-lg">Reports module coming soon.</div>;
+        case 'users': return <AdminUsers setView={setActiveView} />;
+        case 'creators': return <AdminCreators setView={setActiveView} />;
+        case 'courses': return <AdminCourses setView={setActiveView} />;
+        case 'payments': return <AdminPayments setView={setActiveView} />;
+        case 'analytics': return <AdminAnalytics setView={setActiveView} />;
+        case 'reports': return <AdminReports setView={setActiveView} />;
         case 'settings': return <Settings setView={setActiveView} />;
         default: return <div className="p-8 flex items-center justify-center text-slate-500 h-full text-lg">Page not found in Admin Panel.</div>;
       }

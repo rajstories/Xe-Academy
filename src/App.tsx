@@ -9,6 +9,8 @@ import { LiquidMetalButton } from './components/ui/liquid-metal-button';
 import { GatewayScreen } from './components/GatewayScreen';
 import { DashboardApp } from './components/DashboardApp';
 
+import { XeLogo } from './components/XeLogo';
+
 export const NavigationContext = createContext({
   navigate: (page: string) => {}
 });
@@ -39,12 +41,7 @@ function Navbar() {
         {/* Left Zone */}
         <div className="flex justify-start">
           <a href="#" className={`flex items-center gap-3 transition-colors duration-300 ${scrolled ? 'text-slate-900' : 'text-white'}`}>
-            <svg viewBox="0 0 90 40" fill="currentColor" className="h-6 md:h-7 w-auto">
-              <path d="M 0 0 H 30 L 50 20 L 30 40 H 0 L 20 20 Z" />
-              <path d="M 40 0 H 90 V 10 H 50 Z" />
-              <path d="M 50 30 H 90 V 40 H 40 Z" />
-              <path d="M 55 15 L 60 20 L 55 25 H 75 V 15 Z" />
-            </svg>
+            <XeLogo className="h-6 md:h-7 w-auto" />
             <span className="text-lg md:text-xl font-bold uppercase tracking-[0.2em] mt-0.5">
               ACADEMY
             </span>
@@ -627,14 +624,9 @@ function Footer() {
         <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-20">
           <div className="col-span-2 md:col-span-2 pr-8">
             <a href="#" className="flex items-center gap-3 text-indigo-600 mb-6">
-              <svg viewBox="0 0 90 40" fill="currentColor" className="h-8 w-auto">
-                <path d="M 0 0 H 30 L 50 20 L 30 40 H 0 L 20 20 Z" />
-                <path d="M 40 0 H 90 V 10 H 50 Z" />
-                <path d="M 50 30 H 90 V 40 H 40 Z" />
-                <path d="M 55 15 L 60 20 L 55 25 H 75 V 15 Z" />
-              </svg>
+              <XeLogo className="h-8 w-auto" />
               <span className="text-2xl font-bold uppercase tracking-[0.2em] mt-0.5 text-indigo-700">
-                XE ACADEMY
+                ACADEMY
               </span>
             </a>
             <p className="mt-4 text-slate-700 text-base leading-relaxed max-w-sm mb-8">

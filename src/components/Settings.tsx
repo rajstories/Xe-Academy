@@ -78,7 +78,7 @@ export default function Settings({ setView }: Props) {
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-text-primary mb-2">Email Address</label>
-                    <input type="email" defaultValue="student@learnspace.edu" className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-secondary" readOnly />
+                    <input type="email" defaultValue="student@xeacademy.com" className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-secondary" readOnly />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-text-primary mb-2">Bio</label>

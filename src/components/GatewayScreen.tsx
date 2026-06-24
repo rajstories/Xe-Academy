@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { GraduationCap, Video, ArrowRight, ArrowLeft } from 'lucide-react';
+import { XeLogo } from './XeLogo';
 
 interface GatewayScreenProps {
   onBack: () => void;
@@ -24,6 +25,14 @@ export function GatewayScreen({ onBack }: GatewayScreenProps) {
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 py-20 z-10">
         <div className="text-center mb-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
+            className="flex justify-center mb-6"
+          >
+            <XeLogo className="h-12 text-indigo-600" />
+          </motion.div>
           <motion.h1 
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}

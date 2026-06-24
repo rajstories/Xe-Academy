@@ -2,6 +2,7 @@
 
 import { LayoutDashboard, BookOpen, Calendar, Award, Users, Download, User, Settings, Video, FileText, BarChart3, DollarSign, Activity } from 'lucide-react';
 import { Role, View } from '../types';
+import { XeLogo } from './XeLogo';
 
 interface SidebarProps {
   role: Role;
@@ -46,9 +47,10 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
   return (
     <div className="w-[260px] flex-shrink-0 bg-surface border-r border-border flex flex-col h-full z-10 transition-all duration-300">
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-primary tracking-tight">
-          Learn<span className="text-text-primary">Space</span>
-        </h1>
+        <div className="flex items-center">
+          <XeLogo className="h-6 text-slate-900 mr-3" />
+          <span className="text-xl font-bold tracking-widest text-slate-900">ACADEMY</span>
+        </div>
         <p className="text-sm text-text-secondary mt-1 capitalize">{role} Portal</p>
       </div>
 
@@ -91,7 +93,7 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
              </div>
              <div className="text-left">
                <p className="text-sm font-semibold text-text-primary leading-tight">John Doe</p>
-               <p className="text-xs text-text-secondary">{role}@learnspace.edu</p>
+             <p className="text-xs text-text-secondary">{role}@xeacademy.com</p>
              </div>
           </div>
         </button>
