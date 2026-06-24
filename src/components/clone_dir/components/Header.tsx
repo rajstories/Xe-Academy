@@ -1,0 +1,101 @@
+'use client';
+
+import { Bell, ChevronDown } from 'lucide-react';
+import { Role, View } from '@/types';
+
+interface HeaderProps {
+  role: Role;
+  setRole: (role: Role) => void;
+  activeView: View;
+}
+
+export default function Header({ role, setRole, activeView }: HeaderProps) {
+  const getHeaderInfo = (view: string, currentRole: Role) => {
+    if (currentRole === 'student') {
+      switch (view) {
+        case 'dashboard': return { title: 'Dashboard', subtitle: 'Welcome back, Prince 👋' };
+        case 'my-courses': return { title: 'My Courses', subtitle: 'Continue your learning journey.' };
+        case 'live-classes': return { title: 'Live Sessions', subtitle: 'Manage and join your upcoming live classes.' };
+        case 'schedule': return { title: 'Schedule', subtitle: 'Organize your learning calendar.' };
+        case 'assignments': return { title: 'Assignments', subtitle: 'Track your assignments.' };
+        case 'community': return { title: 'Community', subtitle: 'Connect and collaborate with learners.' };
+        case 'settings': return { title: 'Settings', subtitle: 'Manage your account preferences.' };
+        case 'course-learning': return { title: 'Course Learning', subtitle: 'Mastering your currently selected course.' };
+        default: return { title: 'Dashboard', subtitle: 'Welcome back, Prince 👋' };
+      }
+    } else if (currentRole === 'creator') {
+      switch (view) {
+        case 'dashboard': return { title: 'Creator Studio', subtitle: 'Overview of your creator dashboard.' };
+        case 'my-courses': return { title: 'My Courses', subtitle: 'Manage and grow your course library.' };
+        case 'course-builder': return { title: 'Course Builder', subtitle: 'Structure and edit your course contents.' };
+        case 'students': return { title: 'Students', subtitle: 'Manage and monitor your enrolled students.' };
+        case 'analytics': return { title: 'Analytics', subtitle: 'View course performance metrics.' };
+        case 'live-sessions': return { title: 'Live Sessions', subtitle: 'Create, schedule, manage and host live classes for your students.' };
+        case 'live-studio': return { title: 'Live Studio', subtitle: 'You are currently live.' };
+        case 'revenue': return { title: 'Revenue', subtitle: 'Track your earnings and payouts.' };
+        case 'settings': return { title: 'Settings', subtitle: 'Manage your creator profile.' };
+        default: return { title: 'Creator Studio', subtitle: 'Overview of your creator dashboard.' };
+      }
+    } else if (currentRole === 'admin') {
+      switch (view) {
+        case 'dashboard': return { title: 'Admin Center', subtitle: 'Platform overview and system health.' };
+        case 'users': return { title: 'Users', subtitle: 'Manage platform users.' };
+        case 'creators': return { title: 'Creators', subtitle: 'Manage platform creators.' };
+        case 'courses': return { title: 'Courses', subtitle: 'Manage all platform courses.' };
+        case 'payments': return { title: 'Payments', subtitle: 'Monitor platform transactions.' };
+        case 'analytics': return { title: 'Analytics', subtitle: 'Platform-wide analytics.' };
+        case 'reports': return { title: 'Reports', subtitle: 'System reports and moderation.' };
+        case 'settings': return { title: 'Platform Settings', subtitle: 'Configure platform parameters.' };
+        default: return { title: 'Admin Center', subtitle: 'Platform overview and system health.' };
+      }
+    }
+    return { title: 'Dashboard', subtitle: 'Welcome back.' };
+  };
+
+  const { title, subtitle } = getHeaderInfo(activeView, role);
+
+  return (
+    <header className="flex-shrink-0 bg-transparent flex items-center justify-between px-4 md:px-8 py-6 z-10 border-b border-border/10 mb-6">
+      <div>
+        <h2 className="text-2xl font-bold text-text-primary capitalize">
+          {title}
+        </h2>
+        <p className="text-sm text-text-secondary mt-1">{subtitle}</p>
+      </div>
+
+      <div className="flex items-center gap-4">
+        <button className="relative w-10 h-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors">
+          <Bell size={20} className="text-text-primary" />
+          <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-danger border-2 border-background"></span>
+        </button>
+
+        <div className="relative group">
+          <button className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg font-medium text-sm transition-colors hover:bg-primary/15">
+            <span className="capitalize">{role}</span>
+            <ChevronDown size={16} />
+          </button>
+          <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+            <button
+              onClick={() => setRole('student')}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${role === 'student' ? 'text-primary font-medium' : 'text-text-secondary'}`}
+            >
+              🎓 Student
+            </button>
+            <button
+              onClick={() => setRole('creator')}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${role === 'creator' ? 'text-primary font-medium' : 'text-text-secondary'}`}
+            >
+              🎬 Creator
+            </button>
+            <button
+              onClick={() => setRole('admin')}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${role === 'admin' ? 'text-primary font-medium' : 'text-text-secondary'}`}
+            >
+              ⚙️ Admin
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+  );
+}

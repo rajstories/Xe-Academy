@@ -7,6 +7,7 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { ArrowRight, Play, BookOpen, Presentation, Activity, Globe, ArrowUpRight, Users, Video, UserCheck, BadgeCheck, GraduationCap, Calendar, TrendingUp, MonitorSmartphone, Award, Star, BookmarkPlus, Clock, BarChart, CreditCard, Settings, CheckCircle, Facebook, Twitter, Instagram } from 'lucide-react';
 import { LiquidMetalButton } from './components/ui/liquid-metal-button';
 import { GatewayScreen } from './components/GatewayScreen';
+import { DashboardApp } from './components/DashboardApp';
 
 export const NavigationContext = createContext({
   navigate: (page: string) => {}
@@ -324,6 +325,7 @@ function Ecosystem() {
 }
 
 function PopularCourses() {
+  const { navigate } = useNavigation();
   const courses = [
     {
       title: "The Complete UI/UX Masterclass 2024",
@@ -373,14 +375,14 @@ function PopularCourses() {
             <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-2 block">Trending Now</span>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Explore popular courses</h2>
           </div>
-          <a className="text-indigo-600 font-bold flex items-center gap-2 hover:gap-4 transition-all group" href="#">
+          <button onClick={() => navigate('gateway')} className="text-indigo-600 font-bold flex items-center gap-2 hover:gap-4 transition-all group">
             View all courses <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </a>
+          </button>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {courses.map((course, idx) => (
-            <div key={idx} className="bg-white rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 hover:shadow-indigo-500/10 transition-all duration-300 group cursor-pointer border border-slate-100">
+            <div onClick={() => navigate('gateway')} key={idx} className="bg-white rounded-3xl overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)] hover:-translate-y-1 hover:shadow-indigo-500/10 transition-all duration-300 group cursor-pointer border border-slate-100">
               <div className="relative h-48 overflow-hidden">
                 <img className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={course.image} alt={course.title} />
                 {course.badge && (
@@ -414,6 +416,7 @@ function PopularCourses() {
 }
 
 function LiveSessions() {
+  const { navigate } = useNavigation();
   return (
     <section className="py-24 max-w-7xl mx-auto px-6">
       <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden shadow-2xl shadow-indigo-500/20">
@@ -441,7 +444,7 @@ function LiveSessions() {
                 <span className="text-white/80 text-sm flex items-center gap-1.5 font-medium">
                   <Clock className="w-4 h-4" /> Starts in 15m
                 </span>
-                <button className="bg-white text-indigo-600 text-sm font-bold px-5 py-2.5 rounded-full hover:bg-slate-50 transition-colors">Join Room</button>
+                <button onClick={() => navigate('gateway')} className="bg-white text-indigo-600 text-sm font-bold px-5 py-2.5 rounded-full hover:bg-slate-50 transition-colors">Join Room</button>
               </div>
             </div>
             {/* Live Card 2 */}
@@ -459,7 +462,7 @@ function LiveSessions() {
                 <span className="text-white/80 text-sm flex items-center gap-1.5 font-medium">
                   <Calendar className="w-4 h-4" /> Today, 4:00 PM
                 </span>
-                <button className="bg-white/10 text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-white/20 transition-colors">Set Reminder</button>
+                <button onClick={() => navigate('gateway')} className="bg-white/10 text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-white/20 transition-colors">Set Reminder</button>
               </div>
             </div>
           </div>
@@ -470,6 +473,7 @@ function LiveSessions() {
 }
 
 function CreatorSection() {
+  const { navigate } = useNavigation();
   return (
     <section className="py-24 max-w-7xl mx-auto px-6 overflow-hidden">
       <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
@@ -490,7 +494,7 @@ function CreatorSection() {
             ))}
           </ul>
           <div className="mt-4">
-            <LiquidMetalButton label="Apply as Creator" />
+            <LiquidMetalButton onClick={() => navigate('gateway')} label="Apply as Creator" />
           </div>
         </div>
         
@@ -707,6 +711,14 @@ function Footer() {
 export default function App() {
   const [currentPage, setCurrentPage] = useState('home');
 
+  useEffect(() => {
+    // Check if user is logged in
+    const activeRole = localStorage.getItem('xe_active_role');
+    if (activeRole) {
+      setCurrentPage('dashboard');
+    }
+  }, []);
+
   return (
     <NavigationContext.Provider value={{ navigate: setCurrentPage }}>
       {currentPage === 'home' ? (
@@ -724,6 +736,8 @@ export default function App() {
           </main>
           <Footer />
         </div>
+      ) : currentPage === 'dashboard' ? (
+        <DashboardApp />
       ) : (
         <GatewayScreen onBack={() => setCurrentPage('home')} />
       )}
