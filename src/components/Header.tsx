@@ -71,29 +71,10 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
 
         <div className="relative group">
           <button className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg font-medium text-sm transition-colors hover:bg-primary/15">
-            <span className="capitalize">{role}</span>
+            <span className="capitalize">{role} Profile</span>
             <ChevronDown size={16} />
           </button>
           <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-            <button
-              onClick={() => setRole('student')}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${role === 'student' ? 'text-primary font-medium' : 'text-text-secondary'}`}
-            >
-              🎓 Student
-            </button>
-            <button
-              onClick={() => setRole('creator')}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${role === 'creator' ? 'text-primary font-medium' : 'text-text-secondary'}`}
-            >
-              🎬 Creator
-            </button>
-            <button
-              onClick={() => setRole('admin')}
-              className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors ${role === 'admin' ? 'text-primary font-medium' : 'text-text-secondary'}`}
-            >
-              ⚙️ Admin
-            </button>
-            <div className="border-t border-border/50 my-1"></div>
             <button
               onClick={() => {
                 localStorage.removeItem('xe_active_role');

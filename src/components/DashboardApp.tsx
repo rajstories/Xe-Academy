@@ -19,7 +19,6 @@ import AdminCourses from './AdminCourses';
 import AdminPayments from './AdminPayments';
 import AdminAnalytics from './AdminAnalytics';
 import AdminReports from './AdminReports';
-import RoleSwitcher from './RoleSwitcher';
 import Community from './Community';
 import Settings from './Settings';
 import { ShieldAlert } from 'lucide-react';
@@ -78,7 +77,6 @@ export function DashboardApp() {
         >
           Return to My Dashboard
         </button>
-        <RoleSwitcher currentRole={userRole} setRole={setRole} setActiveView={setActiveView} />
       </div>
     );
   }
