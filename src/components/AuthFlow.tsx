@@ -37,12 +37,12 @@ function Field({
   required?: boolean;
 }) {
   return (
-    <div className="space-y-2">
-      <label className="ml-0.5 flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-slate-500">
+    <div className="space-y-1.5">
+      <label className="ml-0.5 flex items-center gap-1 text-[11px] font-bold uppercase tracking-[0.16em] text-slate-500">
         {label} {required && <span className="text-indigo-500">*</span>}
       </label>
       <input
-        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -58,7 +58,7 @@ function SubmitButton({ children, loading }: { children: string; loading: boolea
     <button
       type="submit"
       disabled={loading}
-      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-white via-amber-200 to-amber-400 py-3.5 text-sm font-bold text-slate-900 shadow-lg shadow-amber-400/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-400/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-white via-amber-200 to-amber-400 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-amber-400/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-400/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" />}
       {children}
@@ -72,7 +72,7 @@ function OAuthButton({ label, onClick, disabled, icon }: { label: string; onClic
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-semibold text-slate-700 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3 text-sm font-semibold text-slate-700 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {icon === 'google' ? (
         <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -302,9 +302,9 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#ede9fe_0,#f8fafc_34%,#ffffff_72%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-10 lg:py-10">
-      <section className="mx-auto grid min-h-[calc(100vh-48px)] w-full max-w-7xl overflow-hidden rounded-[32px] border border-white/80 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.14)] lg:min-h-[calc(100vh-80px)] lg:grid-cols-[1.05fr_0.95fr]">
-        <aside className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
+    <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#ede9fe_0,#f8fafc_34%,#ffffff_72%)] px-3 py-3 text-slate-900 sm:px-5 sm:py-5 lg:h-screen lg:overflow-hidden">
+      <section className="mx-auto grid min-h-[calc(100vh-24px)] w-full max-w-7xl overflow-hidden rounded-[28px] border border-white/80 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.14)] sm:min-h-[calc(100vh-40px)] lg:h-[calc(100vh-40px)] lg:min-h-0 lg:grid-cols-[1.05fr_0.95fr]">
+        <aside className="relative hidden overflow-hidden bg-slate-950 p-8 text-white lg:flex lg:flex-col lg:justify-between xl:p-10">
           {/* background slideshow */}
           <div className="absolute inset-0" aria-hidden="true">
             {heroSlides.map((src, index) => (
@@ -319,7 +319,7 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30" />
 
           <div className="relative z-10">
-            <button onClick={onBackHome} className="mb-12 inline-flex items-center gap-2 text-sm font-semibold text-slate-200/80 transition-colors hover:text-white">
+            <button onClick={onBackHome} className="mb-10 inline-flex items-center gap-2 text-sm font-semibold text-slate-200/80 transition-colors hover:text-white">
               <ArrowLeft size={16} />
               Back to Home
             </button>
@@ -328,10 +328,10 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
               <XeLogo variant="full" theme="dark" className="h-8 w-auto" />
             </div>
 
-            <h1 className="mt-12 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">
+            <h1 className="mt-10 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight xl:text-5xl">
               Where creators, brands &amp; learners grow together.
             </h1>
-            <p className="mt-6 max-w-md text-base leading-7 text-slate-200/85">
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-200/85 xl:text-base">
               One creative studio for teachers, creators, and teams — build courses, go live, reach your audience, and partner with the brands you love.
             </p>
           </div>
@@ -349,11 +349,14 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
           </div>
         </aside>
 
-        <section className="relative flex items-center justify-center bg-white px-5 py-10 sm:px-8 lg:px-12">
+        <section className="relative flex items-center justify-center overflow-y-auto bg-white px-5 py-6 sm:px-8 lg:px-10 lg:py-8">
           <div className="absolute left-0 top-0 hidden h-full w-24 bg-gradient-to-r from-indigo-50/70 to-transparent lg:block" />
-          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="w-full max-w-md">
-            <div className="mb-8">
-              <h2 className="text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">{title}</h2>
+          <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="w-full max-w-[440px]">
+            <div className="mb-5">
+              <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.24em] text-indigo-600">
+                {mode === 'sign-up' ? 'Create Account' : mode === 'sign-in' ? 'Welcome Back' : 'Secure Access'}
+              </p>
+              <h2 className="max-w-[410px] text-3xl font-extrabold leading-[1.04] tracking-tight text-slate-950 sm:text-4xl">{title}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-500">
                 {mode === 'onboarding'
                   ? 'Choose the workspace that fits your XE Academy journey.'
@@ -367,8 +370,8 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
 
             {mode === 'sign-in' && (
               <>
-                <form onSubmit={handleSignIn} className="space-y-6">
-                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <form onSubmit={handleSignIn} className="space-y-4">
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Field label="Email" type="email" value={signInForm.email} onChange={(email) => setSignInForm((form) => ({ ...form, email }))} placeholder="name@company.com" />
                     <Field label="Password" type="password" value={signInForm.password} onChange={(password) => setSignInForm((form) => ({ ...form, password }))} placeholder="••••••••" />
                   </div>
@@ -379,7 +382,7 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
                     <div className="h-px flex-1 bg-slate-200" />
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2.5">
                     <OAuthButton icon="google" label="Continue with Google" disabled={loading} onClick={() => beginOAuth('oauth_google')} />
                     <OAuthButton icon="apple" label="Continue with Apple" disabled={loading} onClick={() => beginOAuth('oauth_apple')} />
                   </div>
@@ -404,7 +407,7 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
 
             {mode === 'sign-up' && (
               <>
-                <form onSubmit={handleSignUp} className="space-y-5">
+                <form onSubmit={handleSignUp} className="space-y-3.5">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Field label="First Name" value={signUpForm.firstName} onChange={(firstName) => setSignUpForm((form) => ({ ...form, firstName }))} placeholder="Ava" />
                     <Field label="Last Name" value={signUpForm.lastName} onChange={(lastName) => setSignUpForm((form) => ({ ...form, lastName }))} placeholder="Chen" />
@@ -414,12 +417,12 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
                   <Field label="Confirm Password" type="password" value={signUpForm.confirmPassword} onChange={(confirmPassword) => setSignUpForm((form) => ({ ...form, confirmPassword }))} placeholder="Confirm password" />
                   <SubmitButton loading={loading}>Create Account</SubmitButton>
                 </form>
-                <div className="my-8 flex items-center gap-4"><div className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold uppercase tracking-widest text-slate-400">or</span><div className="h-px flex-1 bg-slate-200" /></div>
-                <div className="space-y-3">
+                <div className="my-5 flex items-center gap-4"><div className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold uppercase tracking-widest text-slate-400">or</span><div className="h-px flex-1 bg-slate-200" /></div>
+                <div className="space-y-2.5">
                   <OAuthButton icon="google" label="Continue with Google" disabled={loading} onClick={() => beginOAuth('oauth_google')} />
                   <OAuthButton icon="apple" label="Continue with Apple" disabled={loading} onClick={() => beginOAuth('oauth_apple')} />
                 </div>
-                <p className="mt-8 text-center text-sm text-slate-500">Already have an account? <button onClick={() => setMode('sign-in')} className="font-semibold text-indigo-600 hover:text-violet-700">Sign In</button></p>
+                <p className="mt-5 text-center text-sm text-slate-500">Already have an account? <button onClick={() => setMode('sign-in')} className="font-semibold text-indigo-600 hover:text-violet-700">Sign In</button></p>
               </>
             )}
 
