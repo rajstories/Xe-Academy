@@ -23,6 +23,9 @@ export const useNavigation = () => useContext(NavigationContext);
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const { navigate } = useNavigation();
+  const { isSignedIn, user } = useUser();
+  const role = user?.publicMetadata?.role as string | undefined;
+  const dashboardPath = getRoleDashboardPath(role || 'student');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -63,14 +66,16 @@ function Navbar() {
 
         {/* Right Zone */}
         <div className="flex justify-end items-center gap-6">
-          <button onClick={() => navigate('gateway')} className={`hidden md:block text-sm font-medium transition-colors duration-300 ease-in-out ${scrolled ? 'text-slate-600 hover:text-indigo-600' : 'text-white/80 hover:text-white'}`}>
-            Log In
-          </button>
+          {!isSignedIn && (
+            <button onClick={() => navigate('gateway')} className={`hidden md:block text-sm font-medium transition-colors duration-300 ease-in-out ${scrolled ? 'text-slate-600 hover:text-indigo-600' : 'text-white/80 hover:text-white'}`}>
+              Log In
+            </button>
+          )}
           <button
-            onClick={() => navigate('gateway')}
+            onClick={() => navigate(isSignedIn ? dashboardPath : 'gateway')}
             className="text-sm font-semibold tracking-wide bg-gradient-to-r from-white to-[#EAE6F5] text-[#0F172A] px-5 py-2 rounded-full hover:opacity-90 shadow-[0_4px_14px_0_rgba(0,0,0,0.1)] border border-[#C4B5FD] transition-all duration-300 ease-in-out hover:-translate-y-0.5"
           >
-            Get Started
+            {isSignedIn ? 'Go to Dashboard' : 'Get Started'}
           </button>
         </div>
       </div>
@@ -804,9 +809,9 @@ export default function App() {
     if (!isLoaded || !isSignedIn) return;
     const role = user?.publicMetadata?.role as string | undefined;
     const pathname = window.location.pathname;
-    if (!role && !pathname.startsWith('/onboarding') && !pathname.startsWith('/auth')) {
+    if (!role && (pathname.startsWith('/dashboard') || pathname.startsWith('/studio') || pathname.startsWith('/admin'))) {
       navigateTo('/onboarding');
-    } else if (role && (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/onboarding'))) {
+    } else if (role && (pathname.startsWith('/auth') || pathname.startsWith('/onboarding') || pathname === '/gateway')) {
       navigateTo(getRoleDashboardPath(role));
     }
   }, [isLoaded, isSignedIn, user?.publicMetadata?.role]);
@@ -834,7 +839,7 @@ export default function App() {
     );
   }
 
-  if (isSignedIn && !role) {
+  if (isSignedIn && !role && (pathname.startsWith('/onboarding') || pathname.startsWith('/dashboard') || pathname.startsWith('/studio') || pathname.startsWith('/admin'))) {
     return <AuthFlow initialMode="onboarding" initialRole={requestedRole} onBackHome={() => navigateTo('/')} />;
   }
 
