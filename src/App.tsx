@@ -750,6 +750,40 @@ function Footer() {
   );
 }
 
+function AppLoadingScreen() {
+  return (
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[radial-gradient(circle_at_top_left,#ede9fe_0,#f8fafc_38%,#fff7d6_100%)] px-6 text-slate-900">
+      <div className="absolute -left-32 top-20 h-72 w-72 rounded-full bg-violet-200/40 blur-3xl" />
+      <div className="absolute -right-24 bottom-16 h-80 w-80 rounded-full bg-amber-200/35 blur-3xl" />
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+
+      <div className="relative w-full max-w-sm rounded-[2rem] border border-white/80 bg-white/72 p-8 text-center shadow-[0_30px_90px_rgba(15,23,42,0.12)] backdrop-blur-2xl">
+        <div className="mx-auto mb-7 flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-2xl shadow-indigo-500/25">
+          <XeLogo variant="icon" theme="dark" className="h-10 w-auto" />
+        </div>
+
+        <div className="mb-6 flex justify-center">
+          <XeLogo variant="full" theme="light" className="h-8 w-auto" />
+        </div>
+
+        <h1 className="text-xl font-extrabold tracking-tight text-slate-950">Preparing your academy</h1>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          Securing your session and loading your personalized workspace.
+        </p>
+
+        <div className="mt-7 overflow-hidden rounded-full bg-slate-100 p-1">
+          <div className="h-2 w-2/3 animate-[pulse_1.4s_ease-in-out_infinite] rounded-full bg-gradient-to-r from-indigo-600 via-violet-600 to-indigo-500 shadow-lg shadow-indigo-500/20" />
+        </div>
+
+        <div className="mt-6 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-[0.22em] text-indigo-600">
+          <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
+          XE Secure
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [currentPath, setCurrentPath] = useState(() => `${window.location.pathname}${window.location.search}`);
@@ -787,11 +821,7 @@ export default function App() {
   }
 
   if (!isLoaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-white text-slate-500">
-        Loading XE Academy...
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   if (pathname.startsWith('/auth') || pathname.startsWith('/onboarding') || (!isSignedIn && (pathname.startsWith('/dashboard') || pathname.startsWith('/studio')))) {
