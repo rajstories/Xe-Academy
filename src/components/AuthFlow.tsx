@@ -134,6 +134,16 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
     return 'Sign in';
   }, [mode]);
 
+  const eyebrow = useMemo(() => {
+    if (mode === 'sign-up' && selectedRole === 'student') return 'Student Portal';
+    if (mode === 'sign-up' && selectedRole === 'creator') return 'Creator Portal';
+    if (mode === 'sign-up') return 'XE Academy Portal';
+    if (mode === 'sign-in' && selectedRole === 'student') return 'Student Portal Access';
+    if (mode === 'sign-in' && selectedRole === 'creator') return 'Creator Portal Access';
+    if (mode === 'sign-in') return 'Welcome Back';
+    return 'Secure Access';
+  }, [mode, selectedRole]);
+
   const beginOAuth = async (strategy: 'oauth_google' | 'oauth_apple') => {
     setError('');
     setLoading(true);
@@ -354,16 +364,16 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="w-full max-w-[440px]">
             <div className="mb-5">
               <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.24em] text-indigo-600">
-                {mode === 'sign-up' ? 'Create Account' : mode === 'sign-in' ? 'Welcome Back' : 'Secure Access'}
+                {eyebrow}
               </p>
               <h2 className="max-w-[410px] text-3xl font-extrabold leading-[1.04] tracking-tight text-slate-950 sm:text-4xl">{title}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                {mode === 'onboarding'
-                  ? 'Choose the workspace that fits your XE Academy journey.'
-                  : mode === 'sign-up'
-                  ? <>Continue with secure Clerk authentication and XE Academy personalization.</>
-                  : <>Pick up right where you left off. <button type="button" onClick={() => setMode('sign-up')} className="font-semibold text-indigo-600 hover:text-violet-700">Create an account</button></>}
-              </p>
+              {mode !== 'sign-up' && (
+                <p className="mt-3 text-sm leading-6 text-slate-500">
+                  {mode === 'onboarding'
+                    ? 'Choose the workspace that fits your XE Academy journey.'
+                    : <>Pick up right where you left off. <button type="button" onClick={() => setMode('sign-up')} className="font-semibold text-indigo-600 hover:text-violet-700">Create an account</button></>}
+                </p>
+              )}
             </div>
 
             {error && <div className="mb-5 rounded-2xl border border-red-100 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{error}</div>}
