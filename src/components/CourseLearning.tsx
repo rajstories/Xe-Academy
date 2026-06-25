@@ -1,328 +1,706 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { ArrowLeft, PlayCircle, CheckCircle, Circle, FileText, MessageSquare, Bookmark, Download, Settings, Maximize, Volume2, Pause, Play } from 'lucide-react';
-import { View } from '../types';
+import { useMemo, useRef, useState } from 'react';
+import type { PointerEvent, SyntheticEvent } from 'react';
+import {
+  ArrowLeft,
+  Bookmark,
+  CheckCircle,
+  ChevronRight,
+  Circle,
+  Clock3,
+  Download,
+  FileText,
+  Maximize,
+  MessageSquare,
+  Pause,
+  Play,
+  PlayCircle,
+  Send,
+  Volume2,
+} from 'lucide-react';
 // @ts-ignore
 import ReactPlayer from 'react-player';
+import { View } from '../types';
 
 interface Props {
   setView: (view: View) => void;
 }
 
-const curriculumData = [
+type ActiveTab = 'notes' | 'discuss' | 'files';
+
+type Timestamp = {
+  label: string;
+  time: number;
+};
+
+type Lesson = {
+  id: number;
+  title: string;
+  durationLabel: string;
+  durationSeconds: number;
+  completed: boolean;
+  videoUrl: string;
+  timestamps: Timestamp[];
+};
+
+type Module = {
+  title: string;
+  lessons: Lesson[];
+};
+
+type Note = {
+  id: number;
+  text: string;
+  time: number;
+  timestamp: string;
+};
+
+type PlayerHandle = HTMLVideoElement & {
+  seekTo?: (amount: number, type?: 'seconds' | 'fraction') => void;
+  getCurrentTime?: () => number;
+};
+
+const curriculumData: Module[] = [
   {
-    module: 'Module 1: Introduction',
+    title: 'Module 1: Foundations',
     lessons: [
-      { id: 1, title: 'Welcome to the Course', duration: '2:15', completed: true, videoUrl: 'https://www.youtube.com/watch?v=Tn6-PIqc4UM' },
-      { id: 2, title: 'What is React?', duration: '5:10', completed: true, videoUrl: 'https://www.youtube.com/watch?v=Ke90Tje7VS0' },
-      { id: 3, title: 'Setting up the environment', duration: '12:30', completed: true, videoUrl: 'https://www.youtube.com/watch?v=O6P86uwfdR0' },
-    ]
+      {
+        id: 1,
+        title: 'Welcome to XE Academy',
+        durationLabel: '13:38',
+        durationSeconds: 818,
+        completed: true,
+        videoUrl: 'https://www.youtube.com/watch?v=Tn6-PIqc4UM',
+        timestamps: [
+          { label: 'Course outcomes', time: 18 },
+          { label: 'Learning workflow', time: 132 },
+          { label: 'Project brief', time: 252 },
+        ],
+      },
+      {
+        id: 2,
+        title: 'React Mental Models',
+        durationLabel: '18:42',
+        durationSeconds: 1122,
+        completed: true,
+        videoUrl: 'https://www.youtube.com/watch?v=Ke90Tje7VS0',
+        timestamps: [
+          { label: 'Components as contracts', time: 44 },
+          { label: 'State ownership', time: 276 },
+          { label: 'Render flow', time: 511 },
+        ],
+      },
+    ],
   },
   {
-    module: 'Module 2: Hooks Deep Dive',
+    title: 'Module 2: Hooks Deep Dive',
     lessons: [
-      { id: 4, title: 'Understanding useState', duration: '15:20', completed: true, videoUrl: 'https://www.youtube.com/watch?v=O6P86uwfdR0' },
-      { id: 5, title: 'The useEffect Hook', duration: '22:15', completed: false, videoUrl: 'https://www.youtube.com/watch?v=0ZJgIjIuY7U' },
-      { id: 6, title: 'Custom Hooks', duration: '10:40', completed: false, videoUrl: 'https://www.youtube.com/watch?v=J-g9ZJha8FE' },
-      { id: 7, title: 'useMemo & useCallback', duration: '8:00', completed: false, videoUrl: 'https://www.youtube.com/watch?v=THL1OPn72vo' },
-    ]
+      {
+        id: 3,
+        title: 'Understanding useState',
+        durationLabel: '15:20',
+        durationSeconds: 920,
+        completed: true,
+        videoUrl: 'https://www.youtube.com/watch?v=O6P86uwfdR0',
+        timestamps: [
+          { label: 'Initializer patterns', time: 86 },
+          { label: 'Updater functions', time: 284 },
+          { label: 'State batching', time: 508 },
+        ],
+      },
+      {
+        id: 4,
+        title: 'The useEffect Hook',
+        durationLabel: '22:15',
+        durationSeconds: 1335,
+        completed: false,
+        videoUrl: 'https://www.youtube.com/watch?v=0ZJgIjIuY7U',
+        timestamps: [
+          { label: 'Lifecycle translation', time: 58 },
+          { label: 'Dependency arrays', time: 252 },
+          { label: 'Cleanup functions', time: 641 },
+          { label: 'Avoiding effect traps', time: 1004 },
+        ],
+      },
+      {
+        id: 5,
+        title: 'Custom Hooks',
+        durationLabel: '10:40',
+        durationSeconds: 640,
+        completed: false,
+        videoUrl: 'https://www.youtube.com/watch?v=J-g9ZJha8FE',
+        timestamps: [
+          { label: 'Extracting behavior', time: 33 },
+          { label: 'Input/output design', time: 228 },
+          { label: 'Testing hooks', time: 471 },
+        ],
+      },
+    ],
   },
   {
-    module: 'Module 3: State Management',
+    title: 'Module 3: Application State',
     lessons: [
-      { id: 8, title: 'Context API Basics', duration: '14:20', completed: false, videoUrl: 'https://www.youtube.com/watch?v=5LrDIWkK_Bc' },
-      { id: 9, title: 'Redux Toolkit Intro', duration: '20:15', completed: false, videoUrl: 'https://www.youtube.com/watch?v=9boMnm5X9ak' },
-    ]
-  }
+      {
+        id: 6,
+        title: 'Context API Basics',
+        durationLabel: '14:20',
+        durationSeconds: 860,
+        completed: false,
+        videoUrl: 'https://www.youtube.com/watch?v=5LrDIWkK_Bc',
+        timestamps: [
+          { label: 'Provider shape', time: 74 },
+          { label: 'Consumer ergonomics', time: 302 },
+          { label: 'Performance boundaries', time: 629 },
+        ],
+      },
+      {
+        id: 7,
+        title: 'Redux Toolkit Intro',
+        durationLabel: '20:15',
+        durationSeconds: 1215,
+        completed: false,
+        videoUrl: 'https://www.youtube.com/watch?v=9boMnm5X9ak',
+        timestamps: [
+          { label: 'Store setup', time: 119 },
+          { label: 'Slices', time: 384 },
+          { label: 'Async flows', time: 759 },
+        ],
+      },
+    ],
+  },
 ];
 
+const speedOptions = [1, 1.5, 2];
+
+function formatTime(totalSeconds: number) {
+  const safeSeconds = Number.isFinite(totalSeconds) ? Math.max(0, Math.floor(totalSeconds)) : 0;
+  const minutes = Math.floor(safeSeconds / 60).toString().padStart(2, '0');
+  const seconds = (safeSeconds % 60).toString().padStart(2, '0');
+  return `${minutes}:${seconds}`;
+}
+
 export default function CourseLearning({ setView }: Props) {
-  const [activeTab, setActiveTab] = useState('notes');
-  const [activeLesson, setActiveLesson] = useState(curriculumData[1].lessons[1]);
-  
-  const [isPlaying, setIsPlaying] = useState(false);
+  const initialLesson = curriculumData[1].lessons[1];
+
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(initialLesson.videoUrl);
+  const [currentLesson, setCurrentLesson] = useState<Lesson>(initialLesson);
+  const [playing, setPlaying] = useState(false);
   const [played, setPlayed] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [volume, setVolume] = useState(0.8);
+  const [duration, setDuration] = useState(initialLesson.durationSeconds);
+  const [volume, setVolume] = useState(0.78);
+  const [activeTab, setActiveTab] = useState<ActiveTab>('notes');
   const [playbackRate, setPlaybackRate] = useState(1);
-  
-  const playerRef = useRef<HTMLVideoElement>(null);
-  const playerContainerRef = useRef<HTMLDivElement>(null);
+  const [noteText, setNoteText] = useState('');
+  const [notes, setNotes] = useState<Note[]>([
+    {
+      id: 1,
+      text: 'The dependency array is the decision point for when this lesson logic re-runs.',
+      time: 252,
+      timestamp: '@04:12',
+    },
+  ]);
+  const [pendingSeek, setPendingSeek] = useState<number | null>(null);
 
-  const handleTimeUpdate = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    const target = e.currentTarget;
-    if (target.duration) {
-      setPlayed(target.currentTime / target.duration);
+  const playerRef = useRef<PlayerHandle | null>(null);
+  const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const isDraggingProgress = useRef(false);
+
+  const currentSeconds = played * duration;
+  const completedLessons = useMemo(
+    () => curriculumData.flatMap((module) => module.lessons).filter((lesson) => lesson.completed).length,
+    []
+  );
+  const lessonCount = useMemo(() => curriculumData.flatMap((module) => module.lessons).length, []);
+  const completion = Math.round((completedLessons / lessonCount) * 100);
+
+  const seekTo = (seconds: number) => {
+    const nextTime = Math.max(0, Math.min(seconds, duration || currentLesson.durationSeconds));
+    if (playerRef.current?.seekTo) {
+      playerRef.current.seekTo(nextTime, 'seconds');
+    } else if (playerRef.current) {
+      playerRef.current.currentTime = nextTime;
+    }
+    setPlayed(duration ? nextTime / duration : 0);
+  };
+
+  const getPlayerTime = () => {
+    const exactTime = playerRef.current?.getCurrentTime?.();
+    return typeof exactTime === 'number' && Number.isFinite(exactTime) ? exactTime : currentSeconds;
+  };
+
+  const handleLessonSelect = (lesson: Lesson, seekTime = 0) => {
+    setCurrentLesson(lesson);
+    setDuration(lesson.durationSeconds);
+    setPlayed(0);
+    setPlaying(true);
+
+    if (lesson.videoUrl !== currentVideoUrl) {
+      setCurrentVideoUrl(lesson.videoUrl);
+      setPendingSeek(seekTime);
+      return;
+    }
+
+    seekTo(seekTime);
+  };
+
+  const handlePlayerReady = () => {
+    if (pendingSeek !== null) {
+      seekTo(pendingSeek);
+      setPendingSeek(null);
     }
   };
 
-  const handleDurationChange = (e: React.SyntheticEvent<HTMLVideoElement>) => {
-    setDuration(e.currentTarget.duration);
-  };
-
-  const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    const bounds = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - bounds.left;
-    const fraction = Math.max(0, Math.min(1, x / bounds.width));
-    setPlayed(fraction);
-    if (playerRef.current) {
-      playerRef.current.currentTime = fraction * duration;
+  const updateProgressFromPointer = (event: PointerEvent<HTMLDivElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const nextPlayed = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+    setPlayed(nextPlayed);
+    if (playerRef.current?.seekTo) {
+      playerRef.current.seekTo(nextPlayed, 'fraction');
+    } else if (playerRef.current && duration) {
+      playerRef.current.currentTime = nextPlayed * duration;
     }
   };
 
-  const handleVolumeChange = (e: React.MouseEvent<HTMLDivElement>) => {
-    const bounds = e.currentTarget.getBoundingClientRect();
-    const x = e.clientX - bounds.left;
-    const fraction = Math.max(0, Math.min(1, x / bounds.width));
-    setVolume(fraction);
+  const handleTimeUpdate = (event: SyntheticEvent<HTMLVideoElement>) => {
+    if (isDraggingProgress.current) return;
+
+    const media = event.currentTarget;
+    const mediaDuration = Number.isFinite(media.duration) && media.duration > 0 ? media.duration : duration;
+    if (mediaDuration) {
+      setPlayed(media.currentTime / mediaDuration);
+    }
+  };
+
+  const handleDurationChange = (event: SyntheticEvent<HTMLVideoElement>) => {
+    const mediaDuration = event.currentTarget.duration;
+    if (Number.isFinite(mediaDuration) && mediaDuration > 0) {
+      setDuration(mediaDuration);
+    }
+  };
+
+  const handleProgressPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    isDraggingProgress.current = true;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    updateProgressFromPointer(event);
+  };
+
+  const handleProgressPointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (isDraggingProgress.current) {
+      updateProgressFromPointer(event);
+    }
+  };
+
+  const handleProgressPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    isDraggingProgress.current = false;
+    event.currentTarget.releasePointerCapture(event.pointerId);
+    updateProgressFromPointer(event);
+  };
+
+  const handleVolumePointer = (event: PointerEvent<HTMLDivElement>) => {
+    const bounds = event.currentTarget.getBoundingClientRect();
+    const nextVolume = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+    setVolume(nextVolume);
+  };
+
+  const saveNote = () => {
+    const trimmedText = noteText.trim();
+    if (!trimmedText) return;
+
+    const time = getPlayerTime();
+    setNotes((currentNotes) => [
+      {
+        id: Date.now(),
+        text: trimmedText,
+        time,
+        timestamp: `@${formatTime(time)}`,
+      },
+      ...currentNotes,
+    ]);
+    setNoteText('');
   };
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      playerContainerRef.current?.requestFullscreen().catch(err => {
-        console.error(`Error attempting to enable full-screen mode: ${err.message}`);
-      });
-    } else {
-      document.exitFullscreen().catch(err => {
-        console.error(`Error attempting to exit full-screen mode: ${err.message}`);
-      });
+      playerContainerRef.current?.requestFullscreen();
+      return;
     }
-  };
 
-  const togglePlaybackRate = () => {
-    const rates = [1, 1.25, 1.5, 2];
-    const currentIndex = rates.indexOf(playbackRate);
-    setPlaybackRate(rates[(currentIndex + 1) % rates.length]);
-  };
-
-  const formatTime = (seconds: number) => {
-    const date = new Date(seconds * 1000);
-    const mm = date.getUTCMinutes();
-    const ss = date.getUTCSeconds().toString().padStart(2, '0');
-    return `${mm}:${ss}`;
-  };
-
-  const togglePlay = () => {
-    setIsPlaying(!isPlaying);
+    document.exitFullscreen();
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-120px)] animate-in fade-in duration-500">
-      
-      <div className="flex-1 flex flex-col lg:flex-row gap-6 min-h-0">
-        
-        {/* Left: Curriculum Sidebar */}
-        <div className="w-full lg:w-80 flex-shrink-0 bg-surface border border-border/50 rounded-2xl flex flex-col overflow-hidden shadow-sm">
-          <div className="p-4 border-b border-border/50 bg-gray-50/50">
-            <h3 className="font-bold text-text-primary mb-2">Course Content</h3>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-gray-200 rounded-full overflow-hidden">
-                <div className="h-full bg-success w-[40%] rounded-full"></div>
-              </div>
-              <span className="text-xs font-bold text-text-primary">40%</span>
+    <div className="min-h-[calc(100vh-96px)] bg-slate-50 px-4 py-5 text-slate-900 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-[1800px] flex-col gap-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setView('dashboard')}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-indigo-200 hover:text-indigo-700 active:scale-95"
+              aria-label="Back to dashboard"
+            >
+              <ArrowLeft size={18} />
+            </button>
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">XE Academy</p>
+              <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Course Learning</h1>
             </div>
           </div>
-          
-          <div className="flex-1 overflow-y-auto p-2 space-y-4">
-            {curriculumData.map((mod, idx) => (
-              <div key={idx}>
-                <h4 className="text-xs font-bold text-text-secondary uppercase tracking-wider px-2 mb-2">{mod.module}</h4>
-                <div className="space-y-1">
-                  {mod.lessons.map(lesson => (
-                    <button 
-                      key={lesson.id}
-                      onClick={() => {
-                        setActiveLesson(lesson as any);
-                        setIsPlaying(true);
-                      }}
-                      className={`w-full text-left px-3 py-2.5 rounded-xl flex gap-3 transition-colors ${activeLesson.id === lesson.id ? 'bg-primary/10' : 'hover:bg-gray-50'}`}
-                    >
-                      <div className="mt-0.5">
-                        {lesson.completed ? (
-                          <CheckCircle size={16} className="text-success" />
-                        ) : activeLesson.id === lesson.id ? (
-                          <PlayCircle size={16} className="text-primary" />
-                        ) : (
-                          <Circle size={16} className="text-gray-300" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className={`text-sm font-medium leading-tight mb-1 ${activeLesson.id === lesson.id ? 'text-primary' : 'text-text-primary'}`}>
-                          {lesson.id}. {lesson.title}
-                        </p>
-                        <p className="text-xs text-text-secondary">{lesson.duration}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+          <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-indigo-200 hover:text-indigo-700 active:scale-95">
+            <Bookmark size={16} />
+            Bookmark Lesson
+          </button>
         </div>
 
-        {/* Center: Video Player */}
-        <div ref={playerContainerRef} className="flex-1 flex flex-col min-w-0 bg-black rounded-2xl overflow-hidden shadow-lg relative group">
-          {/* Video Container */}
-          <div className="absolute inset-0 z-0 flex items-center justify-center bg-black">
-             <ReactPlayer
-                ref={playerRef}
-                src={activeLesson.videoUrl}
-                style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
-                playing={isPlaying}
+        <div className="grid min-h-[760px] grid-cols-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
+          <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-200 p-5">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="font-bold text-slate-900">Course Content</h2>
+                  <p className="mt-1 text-sm text-slate-500">{completedLessons} of {lessonCount} lessons complete</p>
+                </div>
+                <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">{completion}%</span>
+              </div>
+              <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div className="h-full rounded-full bg-indigo-600" style={{ width: `${completion}%` }} />
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-3">
+              {curriculumData.map((module) => (
+                <section key={module.title} className="mb-5 last:mb-0">
+                  <h3 className="mb-2 px-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                    {module.title}
+                  </h3>
+                  <div className="space-y-1.5">
+                    {module.lessons.map((lesson) => {
+                      const isActive = lesson.id === currentLesson.id;
+
+                      return (
+                        <div key={lesson.id} className="rounded-xl">
+                          <button
+                            onClick={() => handleLessonSelect(lesson, 0)}
+                            className={`flex w-full gap-3 rounded-xl px-3 py-3 text-left transition-all active:scale-95 ${
+                              isActive
+                                ? 'bg-indigo-50 text-indigo-700'
+                                : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                            }`}
+                          >
+                            <span className="mt-0.5">
+                              {lesson.completed ? (
+                                <CheckCircle size={17} className="text-emerald-500" />
+                              ) : isActive ? (
+                                <PlayCircle size={17} className="text-indigo-600" />
+                              ) : (
+                                <Circle size={17} className="text-slate-300" />
+                              )}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-semibold leading-snug">{lesson.title}</span>
+                              <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
+                                <Clock3 size={13} />
+                                {lesson.durationLabel}
+                              </span>
+                            </span>
+                            <ChevronRight size={16} className={isActive ? 'text-indigo-500' : 'text-slate-300'} />
+                          </button>
+
+                          {isActive && (
+                            <div className="ml-9 mt-1 space-y-1 border-l border-indigo-100 pl-3">
+                              {lesson.timestamps.map((timestamp) => (
+                                <button
+                                  key={`${lesson.id}-${timestamp.time}`}
+                                  onClick={() => handleLessonSelect(lesson, timestamp.time)}
+                                  className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-500 transition-all hover:bg-indigo-50 hover:text-indigo-700 active:scale-95"
+                                >
+                                  <span>{timestamp.label}</span>
+                                  <span className="font-semibold text-indigo-500">@{formatTime(timestamp.time)}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              ))}
+            </div>
+          </aside>
+
+          <main className="flex min-w-0 flex-col gap-4">
+            <section
+              ref={playerContainerRef}
+              className="group relative aspect-video min-h-[360px] overflow-hidden rounded-2xl bg-black shadow-[0_24px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/5"
+            >
+              <ReactPlayer
+                ref={playerRef as any}
+                src={currentVideoUrl}
+                width="100%"
+                height="100%"
+                playing={playing}
                 volume={volume}
                 playbackRate={playbackRate}
+                controls={false}
+                config={{
+                  youtube: {
+                    playerVars: {
+                      modestbranding: 1,
+                      rel: 0,
+                      showinfo: 0,
+                      controls: 0,
+                      disablekb: 1,
+                    },
+                  },
+                } as any}
+                onReady={handlePlayerReady}
+                onPlay={() => setPlaying(true)}
+                onPause={() => setPlaying(false)}
                 onTimeUpdate={handleTimeUpdate}
                 onDurationChange={handleDurationChange}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
-                onEnded={() => setIsPlaying(false)}
-                controls={false}
-             />
-          </div>
-          
-          {/* Custom Overlay Controls */}
-          <div className={`absolute inset-0 z-10 bg-gradient-to-t from-black/90 via-transparent to-black/40 transition-opacity duration-300 flex flex-col justify-between p-6 ${isPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-100'}`}>
-            <div className="flex justify-between items-start">
-               <div className="bg-black/60 backdrop-blur-md px-4 py-2 rounded-xl text-white text-sm font-medium border border-white/10 shadow-sm">
-                 {activeLesson.title}
-               </div>
-               <button className="bg-black/50 backdrop-blur-md p-2.5 rounded-xl text-white hover:bg-white/20 transition-all border border-white/10 shadow-sm hover:scale-105">
-                 <Bookmark size={20} />
-               </button>
-            </div>
-            
-            <div className="w-full">
-              {/* Progress Bar */}
-              <div 
-                className="group/progress relative h-2 bg-white/20 rounded-full mb-6 cursor-pointer overflow-visible"
-                onClick={handleSeek}
-              >
-                 <div className="absolute top-0 left-0 h-full bg-primary rounded-full transition-all duration-100 ease-linear" style={{ width: `${played * 100}%` }}></div>
-                 <div 
-                   className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow border-2 border-primary opacity-0 group-hover/progress:opacity-100 transform scale-50 group-hover/progress:scale-100 transition-all"
-                   style={{ left: `calc(${played * 100}% - 8px)` }}
-                 ></div>
-              </div>
-              
-              <div className="flex justify-between items-center text-white">
-                <div className="flex items-center gap-6">
-                  <button onClick={togglePlay} className="hover:text-primary transition-colors transform hover:scale-110">
-                    {isPlaying ? <Pause size={28} className="fill-current" /> : <Play size={28} className="fill-current" />}
-                  </button>
-                  <div className="flex items-center gap-3">
-                    <button className="hover:text-primary transition-colors"><Volume2 size={22} /></button>
-                    <div className="w-20 h-1.5 bg-white/30 rounded-full cursor-pointer" onClick={handleVolumeChange}>
-                      <div className="h-full bg-white hover:bg-primary rounded-full transition-colors" style={{ width: `${volume * 100}%` }}></div>
-                    </div>
-                  </div>
-                  <span className="text-sm font-medium tabular-nums tracking-wide">{formatTime(played * duration)} / {formatTime(duration)}</span>
-                </div>
-                
-                <div className="flex items-center gap-5">
-                  <button onClick={togglePlaybackRate} className="text-sm font-bold hover:text-primary transition-colors bg-white/10 px-2 py-1 rounded">{playbackRate}x</button>
-                  <button className="hover:text-primary transition-colors transform hover:rotate-45 duration-300"><Settings size={22} /></button>
-                  <button onClick={toggleFullscreen} className="hover:text-primary transition-colors transform hover:scale-110"><Maximize size={22} /></button>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Big Play Button Overlay (when paused) */}
-          {!isPlaying && (
-            <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-              <div 
-                onClick={togglePlay}
-                className="w-24 h-24 rounded-full bg-primary/90 backdrop-blur-md text-white flex items-center justify-center shadow-2xl shadow-primary/30 pointer-events-auto cursor-pointer hover:scale-110 transition-all duration-300 border border-white/20"
-              >
-                <Play size={40} className="fill-current text-white ml-2" />
-              </div>
-            </div>
-          )}
-        </div>
+                onEnded={() => setPlaying(false)}
+                style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+              />
 
-        {/* Right: Interaction Panel */}
-        <div className="w-full lg:w-80 flex-shrink-0 bg-surface border border-border/50 rounded-2xl flex flex-col overflow-hidden shadow-sm">
-          
-          <div className="flex border-b border-border/50">
-            {[
-              { id: 'notes', icon: FileText, label: 'Notes' },
-              { id: 'discuss', icon: MessageSquare, label: 'Discuss' },
-              { id: 'resources', icon: Download, label: 'Files' },
-            ].map(tab => (
-              <button 
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex-1 py-3 text-sm font-medium flex flex-col items-center gap-1 transition-colors relative
-                  ${activeTab === tab.id ? 'text-primary' : 'text-text-secondary hover:bg-gray-50'}`}
-              >
-                <tab.icon size={18} />
-                <span className="text-[10px] uppercase tracking-wider">{tab.label}</span>
-                {activeTab === tab.id && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary"></div>}
-              </button>
-            ))}
-          </div>
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black via-black/70 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 bg-gradient-to-t from-black via-black/95 to-transparent" />
 
-          <div className="flex-1 overflow-y-auto p-4 bg-gray-50/30">
-            {activeTab === 'notes' && (
-              <div className="h-full flex flex-col">
-                <div className="flex-1 space-y-4">
-                  <div className="bg-white p-3 rounded-xl border border-border/50 shadow-sm">
-                    <div className="flex justify-between items-center mb-1 text-xs">
-                      <span className="text-primary font-bold">@04:12</span>
-                      <span className="text-text-secondary">Just now</span>
-                    </div>
-                    <p className="text-sm text-text-primary leading-relaxed">The dependency array is crucial. Empty array [] means it runs only once on mount.</p>
-                  </div>
-                </div>
-                <div className="mt-4">
-                  <textarea 
-                    placeholder="Take a note at 09:54..." 
-                    className="w-full h-24 p-3 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all resize-none"
-                  ></textarea>
-                  <button className="w-full mt-2 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-hover transition-colors">
-                    Save Note
-                  </button>
-                </div>
-              </div>
-            )}
+              <button
+                onClick={() => setPlaying((isPlaying) => !isPlaying)}
+                className="absolute inset-0 z-20 cursor-default"
+                aria-label={playing ? 'Pause video' : 'Play video'}
+              />
 
-            {activeTab === 'discuss' && (
-              <div className="h-full flex flex-col items-center justify-center text-center p-4">
-                <div className="w-12 h-12 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-3">
-                  <MessageSquare size={24} />
-                </div>
-                <h4 className="font-bold text-text-primary mb-1">Join the conversation</h4>
-                <p className="text-sm text-text-secondary mb-4">Ask questions and discuss with 1,240 other students.</p>
-                <button className="px-4 py-2 bg-white border border-border text-text-primary rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-                  View Discussions
+              {!playing && (
+                <button
+                  onClick={() => setPlaying(true)}
+                  className="absolute left-1/2 top-1/2 z-30 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 ring-8 ring-white/10 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
+                  aria-label="Play video"
+                >
+                  <Play size={40} className="ml-1 fill-current" />
                 </button>
-              </div>
-            )}
+              )}
 
-            {activeTab === 'resources' && (
-              <div className="space-y-2">
-                <a href="#" className="flex items-center justify-between p-3 bg-white border border-border/50 rounded-xl hover:border-primary/50 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-red-100 text-red-600 flex items-center justify-center">
-                      <FileText size={16} />
-                    </div>
-                    <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Cheat_Sheet.pdf</span>
+              <div className={`absolute inset-x-0 bottom-0 z-40 p-4 transition-all duration-300 ${playing ? 'translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100' : 'translate-y-0 opacity-100'}`}>
+                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 text-white shadow-2xl backdrop-blur-sm">
+                  <div
+                    className="relative mb-4 h-2 cursor-pointer rounded-full bg-white/15"
+                    onPointerDown={handleProgressPointerDown}
+                    onPointerMove={handleProgressPointerMove}
+                    onPointerUp={handleProgressPointerUp}
+                    role="slider"
+                    aria-label="Video progress"
+                    aria-valuemin={0}
+                    aria-valuemax={Math.round(duration)}
+                    aria-valuenow={Math.round(currentSeconds)}
+                    tabIndex={0}
+                  >
+                    <div className="absolute inset-y-0 left-0 rounded-full bg-indigo-500" style={{ width: `${played * 100}%` }} />
+                    <div
+                      className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-indigo-500 shadow-lg transition-transform group-hover:scale-110"
+                      style={{ left: `calc(${played * 100}% - 8px)` }}
+                    />
                   </div>
-                  <Download size={16} className="text-text-secondary" />
-                </a>
-                <a href="#" className="flex items-center justify-between p-3 bg-white border border-border/50 rounded-xl hover:border-primary/50 transition-colors group">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded bg-blue-100 text-blue-600 flex items-center justify-center">
-                      <FileText size={16} />
+
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex min-w-0 flex-1 items-center gap-4">
+                      <button
+                        onClick={() => setPlaying((isPlaying) => !isPlaying)}
+                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all hover:bg-indigo-100 active:scale-95"
+                        aria-label={playing ? 'Pause video' : 'Play video'}
+                      >
+                        {playing ? <Pause size={20} className="fill-current" /> : <Play size={20} className="ml-0.5 fill-current" />}
+                      </button>
+
+                      <div className="flex items-center gap-2">
+                        <Volume2 size={18} className="text-white/80" />
+                        <div
+                          className="h-2 w-20 cursor-pointer rounded-full bg-white/15 sm:w-28"
+                          onPointerDown={handleVolumePointer}
+                          onPointerMove={(event) => {
+                            if (event.buttons === 1) handleVolumePointer(event);
+                          }}
+                          role="slider"
+                          aria-label="Volume"
+                          aria-valuemin={0}
+                          aria-valuemax={100}
+                          aria-valuenow={Math.round(volume * 100)}
+                        >
+                          <div className="h-full rounded-full bg-white" style={{ width: `${volume * 100}%` }} />
+                        </div>
+                      </div>
+
+                      <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-white/85">
+                        {formatTime(currentSeconds)} / {formatTime(duration)}
+                      </span>
                     </div>
-                    <span className="text-sm font-medium text-text-primary group-hover:text-primary transition-colors">Starter_Code.zip</span>
+
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={playbackRate}
+                        onChange={(event) => setPlaybackRate(Number(event.target.value))}
+                        className="h-10 rounded-full border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all hover:bg-white/15 active:scale-95"
+                        aria-label="Playback speed"
+                      >
+                        {speedOptions.map((speed) => (
+                          <option key={speed} value={speed} className="text-slate-900">
+                            {speed}x
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        onClick={toggleFullscreen}
+                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white/20 active:scale-95"
+                        aria-label="Toggle fullscreen"
+                      >
+                        <Maximize size={19} />
+                      </button>
+                    </div>
                   </div>
-                  <Download size={16} className="text-text-secondary" />
-                </a>
+                </div>
               </div>
-            )}
-          </div>
+            </section>
+
+            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">Now Playing</p>
+              <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 className="text-2xl font-bold tracking-tight text-slate-900">{currentLesson.title}</h2>
+                  <p className="mt-1 text-sm text-slate-500">
+                    Premium React architecture course with chapter-level seeking and personal notes.
+                  </p>
+                </div>
+                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600">
+                  {currentLesson.durationLabel}
+                </span>
+              </div>
+            </section>
+          </main>
+
+          <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="grid grid-cols-3 border-b border-slate-200">
+              {[
+                { id: 'notes' as const, label: 'Notes', icon: FileText },
+                { id: 'discuss' as const, label: 'Discuss', icon: MessageSquare },
+                { id: 'files' as const, label: 'Files', icon: Download },
+              ].map((tab) => {
+                const Icon = tab.icon;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`relative flex flex-col items-center gap-1 px-3 py-4 text-xs font-bold uppercase tracking-[0.12em] transition-all active:scale-95 ${
+                      activeTab === tab.id ? 'text-indigo-700' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'
+                    }`}
+                  >
+                    <Icon size={18} />
+                    {tab.label}
+                    {activeTab === tab.id && <span className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-indigo-600" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex-1 overflow-y-auto bg-slate-50/60 p-4">
+              {activeTab === 'notes' && (
+                <div className="flex h-full flex-col">
+                  <div className="flex-1 space-y-3 overflow-y-auto pr-1">
+                    {notes.length === 0 ? (
+                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
+                        <FileText className="mx-auto text-slate-300" size={32} />
+                        <p className="mt-3 text-sm font-semibold text-slate-700">No notes yet</p>
+                        <p className="mt-1 text-xs text-slate-500">Capture ideas at the exact frame you are watching.</p>
+                      </div>
+                    ) : (
+                      notes.map((note) => (
+                        <article key={note.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                          <button
+                            onClick={() => seekTo(note.time)}
+                            className="text-sm font-bold text-indigo-600 transition-all hover:text-indigo-800 active:scale-95"
+                          >
+                            {note.timestamp}
+                          </button>
+                          <p className="mt-2 text-sm leading-6 text-slate-700">{note.text}</p>
+                        </article>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="mt-4 border-t border-slate-200 pt-4">
+                    <textarea
+                      value={noteText}
+                      onChange={(event) => setNoteText(event.target.value)}
+                      placeholder={`Take a note at ${formatTime(currentSeconds)}...`}
+                      className="h-28 w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    />
+                    <button
+                      onClick={saveNote}
+                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      disabled={!noteText.trim()}
+                    >
+                      <Send size={16} />
+                      Save Note
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'discuss' && (
+                <div className="flex h-full flex-col">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
+                        <MessageSquare size={19} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-slate-900">Lesson Discussion</h3>
+                        <p className="mt-1 text-sm leading-6 text-slate-500">
+                          Ask a question, compare notes, and follow mentor replies for this lesson.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="mt-3 space-y-3">
+                    {['How do you decide whether logic belongs in an effect or an event handler?', 'Can cleanup functions also cancel async requests?'].map((question, index) => (
+                      <div key={question} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <p className="text-sm font-semibold leading-6 text-slate-800">{question}</p>
+                        <p className="mt-2 text-xs font-medium text-slate-400">{index + 4} replies</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'files' && (
+                <div className="space-y-3">
+                  {[
+                    { name: 'Lesson Cheat Sheet.pdf', meta: 'PDF · 1.8 MB', color: 'bg-rose-50 text-rose-600' },
+                    { name: 'Starter Code.zip', meta: 'ZIP · 4.2 MB', color: 'bg-blue-50 text-blue-600' },
+                    { name: 'Architecture Checklist.md', meta: 'Markdown · 32 KB', color: 'bg-emerald-50 text-emerald-600' },
+                  ].map((file) => (
+                    <a
+                      key={file.name}
+                      href="#"
+                      className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md active:scale-95"
+                    >
+                      <span className="flex min-w-0 items-center gap-3">
+                        <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${file.color}`}>
+                          <FileText size={18} />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate text-sm font-bold text-slate-800">{file.name}</span>
+                          <span className="text-xs font-medium text-slate-400">{file.meta}</span>
+                        </span>
+                      </span>
+                      <Download size={17} className="shrink-0 text-slate-400" />
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+          </aside>
         </div>
       </div>
     </div>

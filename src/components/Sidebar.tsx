@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutDashboard, BookOpen, Calendar, Award, Users, Download, User, Settings, Video, FileText, BarChart3, DollarSign, Activity } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Calendar, Users, User, Settings, Video, FileText, BarChart3, DollarSign } from 'lucide-react';
 import { Role, View } from '../types';
 import { XeLogo } from './XeLogo';
 
@@ -15,8 +15,6 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'my-courses', label: 'My Courses', icon: BookOpen },
     { id: 'live-classes', label: 'Live Sessions', icon: Video },
-    { id: 'schedule', label: 'Schedule', icon: Calendar },
-    { id: 'assignments', label: 'Assignments', icon: FileText },
     { id: 'community', label: 'Community', icon: Users },
     { id: 'settings', label: 'Settings', icon: Settings },
   ];
@@ -25,10 +23,7 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'my-courses', label: 'My Courses', icon: BookOpen },
     { id: 'students', label: 'Students', icon: Users },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
     { id: 'live-sessions', label: 'Live Sessions', icon: Calendar },
-    { id: 'revenue', label: 'Revenue', icon: DollarSign },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   const adminNav = [

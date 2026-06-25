@@ -25,12 +25,12 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
       }
     } else if (currentRole === 'creator') {
       switch (view) {
-        case 'dashboard': return { title: 'Creator Studio', subtitle: 'Overview of your creator dashboard.' };
-        case 'my-courses': return { title: 'My Courses', subtitle: 'Manage and grow your course library.' };
+        case 'dashboard': return { title: 'Creator Studio', subtitle: 'Revenue, sales, students, and watch-time intelligence.' };
+        case 'my-courses': return { title: 'My Courses', subtitle: 'Create, publish, duplicate, and manage premium course tracks.' };
         case 'course-builder': return { title: 'Course Builder', subtitle: 'Structure and edit your course contents.' };
-        case 'students': return { title: 'Students', subtitle: 'Manage and monitor your enrolled students.' };
+        case 'students': return { title: 'Students', subtitle: 'Search, filter, export, and manage enrolled learners.' };
         case 'analytics': return { title: 'Analytics', subtitle: 'View course performance metrics.' };
-        case 'live-sessions': return { title: 'Live Sessions', subtitle: 'Create, schedule, manage and host live classes for your students.' };
+        case 'live-sessions': return { title: 'Live Sessions', subtitle: 'Broadcast command cockpit for live teaching.' };
         case 'live-studio': return { title: 'Live Studio', subtitle: 'You are currently live.' };
         case 'revenue': return { title: 'Revenue', subtitle: 'Track your earnings and payouts.' };
         case 'settings': return { title: 'Settings', subtitle: 'Manage your creator profile.' };
