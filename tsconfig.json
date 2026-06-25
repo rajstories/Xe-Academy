@@ -22,5 +22,11 @@
     },
     "allowImportingTsExtensions": true,
     "noEmit": true
-  }
+  },
+  "exclude": [
+    "src/components/clone_dir",
+    "src/clone_dir",
+    "node_modules",
+    "dist"
+  ]
 }

@@ -22,6 +22,8 @@ import AdminAnalytics from './AdminAnalytics';
 import AdminReports from './AdminReports';
 import Community from './Community';
 import Settings from './Settings';
+import Documentation from './Documentation';
+import HelpSupport from './HelpSupport';
 import { ShieldAlert } from 'lucide-react';
 
 import { Role, View } from '../types';
@@ -89,6 +91,12 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
   }
 
   const renderContent = () => {
+    if (currentView === 'help-support') {
+      return <HelpSupport setView={setActiveView} />;
+    }
+    if (currentView === 'documentation') {
+      return <Documentation />;
+    }
     if (currentRouteRole === 'student') {
       switch (currentView) {
         case 'dashboard': return <StudentDashboard setView={setActiveView} />;
@@ -139,8 +147,8 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
         <Header role={currentRouteRole} setRole={setRole} activeView={currentView} />
         
-        <main className={`flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth ${currentView === 'live-studio' ? 'p-0 md:p-0' : ''}`}>
-          <div className={`max-w-[1600px] mx-auto h-full ${currentView === 'live-studio' ? 'max-w-none' : ''}`}>
+        <main className={`flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth ${currentView === 'live-studio' || currentView === 'documentation' ? 'p-0 md:p-0' : ''}`}>
+          <div className={`max-w-[1600px] mx-auto h-full ${currentView === 'live-studio' || currentView === 'documentation' ? 'max-w-none' : ''}`}>
             {renderContent()}
           </div>
         </main>

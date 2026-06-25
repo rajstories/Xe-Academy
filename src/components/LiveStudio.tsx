@@ -77,9 +77,7 @@ export default function LiveStudio({ setView }: Props) {
               <img 
                 src="https://images.unsplash.com/photo-1573164713988-8665fc963095?q=80&w=1200&auto=format&fit=crop"
                 alt="Camera Feed"
-                fill
-                className="object-cover opacity-80"
-                unoptimized
+                className="absolute inset-0 w-full h-full object-cover opacity-80"
               />
               {/* Presenter Name Tag */}
               <div className="absolute bottom-6 left-6 bg-black/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/10 text-white text-sm font-medium shadow-lg">
@@ -161,12 +159,11 @@ export default function LiveStudio({ setView }: Props) {
               {messages.map((msg) => (
                 <div key={msg.id} className={`flex gap-3 ${msg.user === 'You (Host)' ? 'flex-row-reverse' : ''}`}>
                   <img 
-                    src={msg.avatar} 
-                    alt={msg.user} 
+                    src={msg.avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150&auto=format&fit=crop"} 
+                    alt="Viewer" 
                     width={32} 
                     height={32} 
                     className="rounded-full object-cover flex-shrink-0 border border-border/50"
-                    unoptimized
                   />
                   <div className={`flex flex-col ${msg.user === 'You (Host)' ? 'items-end' : 'items-start'} max-w-[80%]`}>
                     <div className="flex items-center gap-2 mb-1">
@@ -194,7 +191,6 @@ export default function LiveStudio({ setView }: Props) {
                       width={32} 
                       height={32} 
                       className="rounded-full object-cover flex-shrink-0"
-                      unoptimized
                     />
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
@@ -237,7 +233,6 @@ export default function LiveStudio({ setView }: Props) {
                     width={36} 
                     height={36} 
                     className="rounded-full object-cover ring-2 ring-primary"
-                    unoptimized
                   />
                   <div>
                     <div className="text-sm font-bold text-text-primary flex items-center gap-2">
@@ -262,7 +257,6 @@ export default function LiveStudio({ setView }: Props) {
                     width={32} 
                     height={32} 
                     className="rounded-full object-cover"
-                    unoptimized
                   />
                   <div className="text-sm font-medium text-text-primary">Alex Johnson</div>
                 </div>

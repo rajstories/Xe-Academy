@@ -1,10 +1,12 @@
 'use client';
 
+import { useState } from 'react';
 import { LayoutDashboard, BookOpen, Calendar, Users, User, Settings, Video, FileText, BarChart3, DollarSign, HelpCircle, BookText, Sparkles } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { Role, View } from '../types';
 import { XeLogo } from './XeLogo';
 import { getFullName, getInitials } from '../lib/auth';
+import { UpgradeModal } from './Settings';
 
 interface SidebarProps {
   role: Role;
@@ -14,6 +16,7 @@ interface SidebarProps {
 
 export default function Sidebar({ role, activeView, setActiveView }: SidebarProps) {
   const { user } = useUser();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const displayName = getFullName(user || undefined);
   const email = user?.primaryEmailAddress?.emailAddress || `${role}@xeacademy.com`;
   const studentNav = [
@@ -45,8 +48,8 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
   const navItems = role === 'student' ? studentNav : role === 'creator' ? creatorNav : adminNav;
 
   const resourceItems = [
-    { label: 'Documentation', icon: BookText },
-    { label: 'Help & Support', icon: HelpCircle },
+    { id: 'documentation', label: 'Documentation', icon: BookText },
+    { id: 'help-support', label: 'Help & Support', icon: HelpCircle },
   ];
 
   const planLabel = role === 'creator' ? 'Creator Pro' : role === 'admin' ? 'Admin Access' : 'Student Plan';
@@ -87,12 +90,18 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
         <div className="space-y-1">
           {resourceItems.map((item) => {
             const Icon = item.icon;
+            const isActive = activeView === item.id;
             return (
               <button
-                key={item.label}
-                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-text-secondary hover:bg-gray-50 hover:text-text-primary"
+                key={item.id}
+                onClick={() => setActiveView(item.id as View)}
+                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium
+                  ${isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'
+                  }`}
               >
-                <Icon size={18} className="text-text-secondary" />
+                <Icon size={18} className={isActive ? 'text-primary' : 'text-text-secondary'} />
                 {item.label}
               </button>
             );
@@ -110,7 +119,10 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
               <p className="text-xs font-bold text-text-primary leading-tight">{planLabel}</p>
               <p className="text-[11px] text-text-secondary">Current tier</p>
             </div>
-            <button className="flex-shrink-0 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-colors hover:bg-primary-hover">
+            <button
+              onClick={() => setUpgradeOpen(true)}
+              className="flex-shrink-0 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-colors hover:bg-primary-hover"
+            >
               Upgrade
             </button>
           </div>
@@ -118,9 +130,13 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
 
         <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-medium text-text-primary hover:bg-gray-50">
           <div className="flex-1 flex items-center gap-3">
-             <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
-               {getInitials(displayName)}
-             </div>
+             {user?.hasImage ? (
+               <img src={user.imageUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+             ) : (
+               <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
+                 {getInitials(displayName)}
+               </div>
+             )}
              <div className="text-left">
                <p className="text-sm font-semibold text-text-primary leading-tight">{displayName}</p>
              <p className="text-xs text-text-secondary">{email}</p>
@@ -128,6 +144,8 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
           </div>
         </button>
       </div>
+
+      <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </div>
   );
 }

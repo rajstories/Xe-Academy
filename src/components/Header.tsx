@@ -17,6 +17,13 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
   const firstName = getUserDisplayName(user || undefined);
 
   const getHeaderInfo = (view: string, currentRole: Role) => {
+    if (view === 'help-support') {
+      return { title: 'Help & Support', subtitle: "We're here to help you learn without friction." };
+    }
+    if (view === 'documentation') {
+      return { title: 'Documentation', subtitle: 'Developer guides, API references, and manuals.' };
+    }
+
     if (currentRole === 'student') {
       switch (view) {
         case 'dashboard': return { title: `Welcome back, ${firstName}`, subtitle: 'Your learning command center.' };
@@ -77,9 +84,13 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
 
         <div className="relative group">
           <button className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium text-sm transition-colors hover:bg-primary/15">
-            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
-              {role.slice(0, 2).toUpperCase()}
-            </span>
+            {user?.hasImage ? (
+              <img src={user.imageUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
+            ) : (
+              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+                {role.slice(0, 2).toUpperCase()}
+              </span>
+            )}
             <span className="capitalize">{role} Profile</span>
             <ChevronDown size={16} />
           </button>

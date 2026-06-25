@@ -433,7 +433,6 @@ export default function CreatorAnalytics({ setView }: Props) {
                         width={48} 
                         height={36} 
                         className="rounded-md object-cover border border-border/50 shadow-sm"
-                        unoptimized
                       />
                       <div>
                         <div className="font-medium text-text-primary text-sm line-clamp-1">{course.title}</div>
