@@ -318,19 +318,21 @@ export default function HelpSupport({ setView }: Props) {
 
           <div className="w-full md:w-auto flex flex-col sm:flex-row gap-3 md:shrink-0">
             <a
-              href="mailto:support@xeacademy.com?subject=XE%20Academy%20Support%20Request"
+              href="mailto:info@xelabs.in?subject=XE%20Academy%20Support%20Request"
               className="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-white px-5 py-3 text-sm font-bold text-text-primary hover:bg-slate-50 active:scale-[0.98] transition-all shadow-sm"
             >
               <Mail size={16} className="text-text-secondary" />
               Email us
             </a>
-            <button
-              onClick={() => alert('Starting support live chat...')}
+            <a
+              href="https://wa.me/919958262272?text=Hello%20XE%20Academy%20Support%2C%20I%20need%20assistance."
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-bold text-white shadow-lg shadow-primary/20 hover:bg-primary-hover active:scale-[0.98] transition-all"
             >
               <MessageSquare size={16} />
               Chat with Support
-            </button>
+            </a>
           </div>
         </div>
 
