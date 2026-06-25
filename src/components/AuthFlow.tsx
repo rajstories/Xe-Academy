@@ -290,8 +290,16 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
         }),
       });
 
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.error || 'Unable to save onboarding metadata.');
+      const responseText = await response.text();
+      let payload: { error?: string } = {};
+      try {
+        payload = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        payload = {};
+      }
+      if (!response.ok) {
+        throw new Error(payload.error || responseText || `Unable to save onboarding metadata. Server responded with ${response.status}.`);
+      }
 
       await user?.reload();
       window.location.href = getRoleDashboardPath(selectedRole);

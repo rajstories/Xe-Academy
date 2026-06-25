@@ -139,7 +139,7 @@ function Hero() {
                 playsInline
                 onEnded={handleVideoEnded}
                 src={item.src}
-                className={`absolute inset-0 w-full h-full object-cover origin-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
+                className={`absolute inset-0 h-full w-full scale-[1.04] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
               />
             );
           } else {
@@ -148,7 +148,7 @@ function Hero() {
                 key={index}
                 src={item.src}
                 alt={`Hero visual ${index}`}
-                className={`absolute inset-0 w-full h-full object-cover origin-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
+                className={`absolute inset-0 h-full w-full scale-[1.04] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
               />
             );
           }
