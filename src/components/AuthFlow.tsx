@@ -1,7 +1,7 @@
-import { FormEvent, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useState } from 'react';
 import { useAuth, useSignIn, useSignUp, useUser } from '@clerk/clerk-react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, BadgeCheck, BookOpen, Check, GraduationCap, Loader2, RadioTower, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, BadgeCheck, Check, GraduationCap, Loader2, RadioTower, ShieldCheck } from 'lucide-react';
 import { AuthRole, creatorCategories, extractClerkError, getRoleDashboardPath } from '../lib/auth';
 import { XeLogo } from './XeLogo';
 
@@ -38,9 +38,11 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label className="ml-1 text-xs font-bold uppercase tracking-widest text-slate-500">{label}</label>
+      <label className="ml-0.5 flex items-center gap-1 text-xs font-bold uppercase tracking-widest text-slate-500">
+        {label} {required && <span className="text-indigo-500">*</span>}
+      </label>
       <input
-        className="w-full rounded-2xl border border-slate-200 bg-white px-5 py-4 text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
+        className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3.5 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10"
         type={type}
         value={value}
         onChange={(event) => onChange(event.target.value)}
@@ -56,7 +58,7 @@ function SubmitButton({ children, loading }: { children: string; loading: boolea
     <button
       type="submit"
       disabled={loading}
-      className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 py-4 font-bold text-white shadow-lg shadow-indigo-500/20 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-indigo-500/25 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
+      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-white via-amber-200 to-amber-400 py-3.5 text-sm font-bold text-slate-900 shadow-lg shadow-amber-400/30 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-xl hover:shadow-amber-400/40 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 disabled:hover:translate-y-0"
     >
       {loading && <Loader2 className="h-4 w-4 animate-spin" />}
       {children}
@@ -70,7 +72,7 @@ function OAuthButton({ label, onClick, disabled, icon }: { label: string; onClic
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="flex items-center justify-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+      className="flex w-full items-center justify-center gap-3 rounded-xl border border-slate-200 bg-white py-3.5 text-sm font-semibold text-slate-700 transition-all hover:-translate-y-0.5 hover:bg-slate-50 hover:shadow-sm active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-60"
     >
       {icon === 'google' ? (
         <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -114,12 +116,22 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
     confirmPassword: '',
   });
 
+  const heroSlides = ['/hero-img-1.jpg', '/hero-img-2.png', '/hero-img-3.png', '/hero-img-4.jpg'];
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveSlide((current) => (current + 1) % heroSlides.length);
+    }, 4500);
+    return () => clearInterval(interval);
+  }, []);
+
   const title = useMemo(() => {
     if (mode === 'sign-up') return 'Create your XE Academy account';
     if (mode === 'verify-email') return 'Verify your email';
     if (mode === 'reset-password') return 'Reset your password';
     if (mode === 'onboarding') return 'Personalize your workspace';
-    return 'Student Portal Access';
+    return 'Sign in';
   }, [mode]);
 
   const beginOAuth = async (strategy: 'oauth_google' | 'oauth_apple') => {
@@ -292,85 +304,62 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
   return (
     <div className="min-h-screen overflow-x-hidden bg-[radial-gradient(circle_at_top_left,#ede9fe_0,#f8fafc_34%,#ffffff_72%)] px-4 py-6 text-slate-900 sm:px-6 lg:px-10 lg:py-10">
       <section className="mx-auto grid min-h-[calc(100vh-48px)] w-full max-w-7xl overflow-hidden rounded-[32px] border border-white/80 bg-white shadow-[0_30px_90px_rgba(15,23,42,0.14)] lg:min-h-[calc(100vh-80px)] lg:grid-cols-[1.05fr_0.95fr]">
-        <aside className="relative hidden overflow-hidden bg-[linear-gradient(135deg,#111827_0%,#312e81_46%,#6d28d9_100%)] p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
-          <div className="absolute inset-y-0 right-0 w-32 bg-gradient-to-r from-transparent to-white/12" />
-          <div className="absolute -left-24 top-10 h-64 w-64 rounded-full bg-violet-400/20 blur-3xl" />
-          <div className="absolute bottom-10 right-12 h-80 w-80 rounded-full bg-amber-300/10 blur-3xl" />
+        <aside className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between xl:p-14">
+          {/* background slideshow */}
+          <div className="absolute inset-0" aria-hidden="true">
+            {heroSlides.map((src, index) => (
+              <div
+                key={src}
+                className="absolute inset-0 bg-cover bg-center transition-opacity duration-[1400ms] ease-in-out"
+                style={{ backgroundImage: `url(${src})`, opacity: index === activeSlide ? 1 : 0 }}
+              />
+            ))}
+          </div>
+          {/* readability overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/50 to-black/30" />
 
           <div className="relative z-10">
-            <button onClick={onBackHome} className="mb-12 inline-flex items-center gap-2 text-sm font-semibold text-indigo-100/80 transition-colors hover:text-white">
+            <button onClick={onBackHome} className="mb-12 inline-flex items-center gap-2 text-sm font-semibold text-slate-200/80 transition-colors hover:text-white">
               <ArrowLeft size={16} />
               Back to Home
             </button>
-            <div className="mb-14 inline-flex items-center gap-3 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-bold uppercase tracking-[0.28em] text-violet-100 backdrop-blur">
-              <span className="h-2 w-2 rounded-full bg-emerald-300" />
-              XE Academy
+
+            <div className="flex items-center">
+              <XeLogo variant="full" theme="dark" className="h-8 w-auto" />
             </div>
-            <h1 className="max-w-xl text-5xl font-extrabold leading-[1.03] tracking-tight xl:text-6xl">
-              Welcome Back. Keep learning. Keep growing.
+
+            <h1 className="mt-12 max-w-xl text-4xl font-extrabold leading-[1.08] tracking-tight sm:text-5xl">
+              Where creators, brands &amp; learners grow together.
             </h1>
-            <p className="mt-6 max-w-lg text-base leading-7 text-indigo-100/80">
-              Secure access, persistent sessions, and personalized dashboards for students and creators.
+            <p className="mt-6 max-w-md text-base leading-7 text-slate-200/85">
+              One creative studio for teachers, creators, and teams — build courses, go live, reach your audience, and partner with the brands you love.
             </p>
           </div>
 
-          <div className="relative z-10 mx-auto my-10 h-[340px] w-full max-w-[520px]">
-            <motion.div animate={{ y: [0, -12, 0], rotate: [0, 1.5, 0] }} transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }} className="absolute left-8 top-6 rounded-2xl border border-white/18 bg-white/14 p-4 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-full bg-white text-indigo-700">
-                  <BookOpen size={22} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold">Course Completed</p>
-                  <p className="text-xs text-indigo-100/70">84% learning velocity</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div animate={{ y: [0, 10, 0], rotate: [0, -2, 0] }} transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }} className="absolute right-5 top-28 rounded-2xl border border-white/18 bg-white/14 p-4 shadow-2xl backdrop-blur-xl">
-              <div className="flex items-center gap-3">
-                <div className="grid h-11 w-11 place-items-center rounded-full bg-amber-300 text-slate-950">
-                  <RadioTower size={20} />
-                </div>
-                <div>
-                  <p className="text-sm font-bold">Live Class</p>
-                  <p className="text-xs text-indigo-100/70">Starting soon</p>
-                </div>
-              </div>
-            </motion.div>
-
-            <svg className="absolute left-1/2 top-14 h-64 w-64 -translate-x-1/2" viewBox="0 0 240 240" fill="none" aria-hidden="true">
-              <circle cx="120" cy="120" r="94" fill="white" opacity="0.12" />
-              <rect x="72" y="96" width="96" height="68" rx="20" fill="#F8FAFC" />
-              <path d="M86 110h68M86 126h48M86 142h36" stroke="#4338CA" strokeWidth="7" strokeLinecap="round" />
-              <circle cx="120" cy="73" r="28" fill="#FBBF24" />
-              <path d="M99 183c5-26 37-26 42 0" stroke="#F8FAFC" strokeWidth="16" strokeLinecap="round" />
-              <path d="M94 175c9-20 43-20 52 0" stroke="#7C3AED" strokeWidth="14" strokeLinecap="round" />
-              <rect x="88" y="64" width="64" height="40" rx="20" fill="#111827" />
-              <circle cx="107" cy="84" r="4" fill="#F8FAFC" />
-              <circle cx="133" cy="84" r="4" fill="#F8FAFC" />
-              <path d="M111 96c7 5 13 5 20 0" stroke="#F8FAFC" strokeWidth="4" strokeLinecap="round" />
-            </svg>
-          </div>
-
-          <div className="relative z-10 grid grid-cols-3 gap-4 rounded-3xl border border-white/12 bg-white/10 p-4 backdrop-blur">
-            <div><p className="text-2xl font-extrabold">50K+</p><p className="mt-1 text-xs font-medium text-indigo-100/70">Learners</p></div>
-            <div><p className="text-2xl font-extrabold">98%</p><p className="mt-1 text-xs font-medium text-indigo-100/70">Satisfaction</p></div>
-            <div><p className="text-2xl font-extrabold">2K+</p><p className="mt-1 text-xs font-medium text-indigo-100/70">Creators</p></div>
+          <div className="relative z-10 flex items-center gap-4">
+            <div className="flex items-center">
+              <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=128&h=128&fit=crop&crop=faces" alt="" className="h-10 w-10 rounded-full object-cover ring-2 ring-slate-900/60" />
+              <img src="https://images.unsplash.com/photo-1517841905240-472988babdf9?q=80&w=128&h=128&fit=crop&crop=faces" alt="" className="-ml-2 h-10 w-10 rounded-full object-cover ring-2 ring-slate-900/60" />
+              <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=128&h=128&fit=crop&crop=faces" alt="" className="-ml-2 h-10 w-10 rounded-full object-cover ring-2 ring-slate-900/60" />
+              <span className="-ml-2 grid h-10 w-10 place-items-center rounded-full bg-white text-xs font-black text-indigo-700 ring-2 ring-slate-900/60">+9</span>
+            </div>
+            <p className="text-sm text-slate-200/90">
+              Rated <span className="font-extrabold text-white">4.9/5</span> by 50,000+ learners
+            </p>
           </div>
         </aside>
 
         <section className="relative flex items-center justify-center bg-white px-5 py-10 sm:px-8 lg:px-12">
           <div className="absolute left-0 top-0 hidden h-full w-24 bg-gradient-to-r from-indigo-50/70 to-transparent lg:block" />
           <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }} className="w-full max-w-md">
-            <div className="mb-8 text-center lg:text-left">
-              <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/20 lg:mx-0">
-                <XeLogo variant="icon" theme="dark" className="h-6 w-auto" />
-              </div>
-              <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.24em] text-indigo-600">Secure portal</p>
-              <h2 className="text-3xl font-extrabold tracking-tight text-slate-950">{title}</h2>
+            <div className="mb-8">
+              <h2 className="text-4xl font-extrabold tracking-tight text-slate-950 sm:text-5xl">{title}</h2>
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                {mode === 'onboarding' ? 'Choose the workspace that fits your XE Academy journey.' : 'Continue with secure Clerk authentication and XE Academy personalization.'}
+                {mode === 'onboarding'
+                  ? 'Choose the workspace that fits your XE Academy journey.'
+                  : mode === 'sign-up'
+                  ? <>Continue with secure Clerk authentication and XE Academy personalization.</>
+                  : <>Pick up right where you left off. <button type="button" onClick={() => setMode('sign-up')} className="font-semibold text-indigo-600 hover:text-violet-700">Create an account</button></>}
               </p>
             </div>
 
@@ -378,24 +367,38 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
 
             {mode === 'sign-in' && (
               <>
-                <form onSubmit={handleSignIn} className="space-y-5">
-                  <Field label="Email Address" type="email" value={signInForm.email} onChange={(email) => setSignInForm((form) => ({ ...form, email }))} placeholder="name@company.com" />
-                  <Field label="Password" type="password" value={signInForm.password} onChange={(password) => setSignInForm((form) => ({ ...form, password }))} placeholder="••••••••" />
-                  <div className="flex items-center justify-between px-1">
+                <form onSubmit={handleSignIn} className="space-y-6">
+                  <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                    <Field label="Email" type="email" value={signInForm.email} onChange={(email) => setSignInForm((form) => ({ ...form, email }))} placeholder="name@company.com" />
+                    <Field label="Password" type="password" value={signInForm.password} onChange={(password) => setSignInForm((form) => ({ ...form, password }))} placeholder="••••••••" />
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">or</span>
+                    <div className="h-px flex-1 bg-slate-200" />
+                  </div>
+
+                  <div className="space-y-3">
+                    <OAuthButton icon="google" label="Continue with Google" disabled={loading} onClick={() => beginOAuth('oauth_google')} />
+                    <OAuthButton icon="apple" label="Continue with Apple" disabled={loading} onClick={() => beginOAuth('oauth_apple')} />
+                  </div>
+
+                  <div className="flex items-center justify-between">
                     <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-slate-500">
                       <input className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500/20" type="checkbox" checked={signInForm.remember} onChange={(event) => setSignInForm((form) => ({ ...form, remember: event.target.checked }))} />
                       Remember me
                     </label>
                     <button type="button" onClick={() => setMode('reset-password')} className="text-sm font-semibold text-indigo-600 transition-colors hover:text-violet-700">Forgot password?</button>
                   </div>
-                  <SubmitButton loading={loading}>Sign In</SubmitButton>
+
+                  <SubmitButton loading={loading}>Sign in</SubmitButton>
+
+                  <p className="text-center text-sm text-slate-500">
+                    Don't have an account?
+                    <button type="button" onClick={() => setMode('sign-up')} className="ml-1 font-semibold text-indigo-600 hover:text-violet-700">Create an account</button>
+                  </p>
                 </form>
-                <div className="my-8 flex items-center gap-3"><div className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold uppercase tracking-widest text-slate-400">or continue with</span><div className="h-px flex-1 bg-slate-200" /></div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <OAuthButton icon="google" label="Google" disabled={loading} onClick={() => beginOAuth('oauth_google')} />
-                  <OAuthButton icon="apple" label="Apple" disabled={loading} onClick={() => beginOAuth('oauth_apple')} />
-                </div>
-                <p className="mt-8 text-center text-sm text-slate-500">New to XE Academy? <button onClick={() => setMode('sign-up')} className="font-semibold text-indigo-600 hover:text-violet-700">Create Account</button></p>
               </>
             )}
 
@@ -411,8 +414,11 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
                   <Field label="Confirm Password" type="password" value={signUpForm.confirmPassword} onChange={(confirmPassword) => setSignUpForm((form) => ({ ...form, confirmPassword }))} placeholder="Confirm password" />
                   <SubmitButton loading={loading}>Create Account</SubmitButton>
                 </form>
-                <div className="my-8 flex items-center gap-3"><div className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold uppercase tracking-widest text-slate-400">or</span><div className="h-px flex-1 bg-slate-200" /></div>
-                <OAuthButton icon="google" label="Continue with Google" disabled={loading} onClick={() => beginOAuth('oauth_google')} />
+                <div className="my-8 flex items-center gap-4"><div className="h-px flex-1 bg-slate-200" /><span className="text-xs font-bold uppercase tracking-widest text-slate-400">or</span><div className="h-px flex-1 bg-slate-200" /></div>
+                <div className="space-y-3">
+                  <OAuthButton icon="google" label="Continue with Google" disabled={loading} onClick={() => beginOAuth('oauth_google')} />
+                  <OAuthButton icon="apple" label="Continue with Apple" disabled={loading} onClick={() => beginOAuth('oauth_apple')} />
+                </div>
                 <p className="mt-8 text-center text-sm text-slate-500">Already have an account? <button onClick={() => setMode('sign-in')} className="font-semibold text-indigo-600 hover:text-violet-700">Sign In</button></p>
               </>
             )}
