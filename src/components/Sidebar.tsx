@@ -1,8 +1,10 @@
 'use client';
 
-import { LayoutDashboard, BookOpen, Calendar, Users, User, Settings, Video, FileText, BarChart3, DollarSign } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Calendar, Users, User, Settings, Video, FileText, BarChart3, DollarSign, HelpCircle, BookText, Sparkles } from 'lucide-react';
+import { useUser } from '@clerk/clerk-react';
 import { Role, View } from '../types';
 import { XeLogo } from './XeLogo';
+import { getFullName, getInitials } from '../lib/auth';
 
 interface SidebarProps {
   role: Role;
@@ -11,6 +13,9 @@ interface SidebarProps {
 }
 
 export default function Sidebar({ role, activeView, setActiveView }: SidebarProps) {
+  const { user } = useUser();
+  const displayName = getFullName(user || undefined);
+  const email = user?.primaryEmailAddress?.emailAddress || `${role}@xeacademy.com`;
   const studentNav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'my-courses', label: 'My Courses', icon: BookOpen },
@@ -39,56 +44,86 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
 
   const navItems = role === 'student' ? studentNav : role === 'creator' ? creatorNav : adminNav;
 
+  const resourceItems = [
+    { label: 'Documentation', icon: BookText },
+    { label: 'Help & Support', icon: HelpCircle },
+  ];
+
+  const planLabel = role === 'creator' ? 'Creator Pro' : role === 'admin' ? 'Admin Access' : 'Student Plan';
+
   return (
     <div className="w-[260px] flex-shrink-0 bg-surface border-r border-border flex flex-col h-full z-10 transition-all duration-300">
       <div className="p-6">
         <div className="flex items-center">
-          <XeLogo className="h-6 text-slate-900 mr-3" />
-          <span className="text-xl font-bold tracking-widest text-slate-900">ACADEMY</span>
+          <XeLogo variant="full" theme="light" className="h-7 w-auto" />
         </div>
         <p className="text-sm text-text-secondary mt-1 capitalize">{role} Portal</p>
       </div>
 
-      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeView === item.id || (activeView === 'course-learning' && item.id === 'my-courses');
-          
-          return (
-            <button
-              key={item.id}
-              onClick={() => setActiveView(item.id as View)}
-              className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium
-                ${isActive 
-                  ? 'bg-primary/10 text-primary' 
-                  : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'
-                }`}
-            >
-              <Icon size={20} className={isActive ? 'text-primary' : 'text-text-secondary'} />
-              {item.label}
-            </button>
-          );
-        })}
-      </nav>
+      <div className="flex-1 overflow-y-auto px-4 py-4">
+        <nav className="space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeView === item.id || (activeView === 'course-learning' && item.id === 'my-courses');
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveView(item.id as View)}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium
+                  ${isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'text-text-secondary hover:bg-gray-50 hover:text-text-primary'
+                  }`}
+              >
+                <Icon size={20} className={isActive ? 'text-primary' : 'text-text-secondary'} />
+                {item.label}
+              </button>
+            );
+          })}
+        </nav>
+
+        <p className="px-4 pt-6 pb-2 text-[11px] font-bold uppercase tracking-[0.14em] text-text-secondary/60">Resources</p>
+        <div className="space-y-1">
+          {resourceItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <button
+                key={item.label}
+                className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-text-secondary hover:bg-gray-50 hover:text-text-primary"
+              >
+                <Icon size={18} className="text-text-secondary" />
+                {item.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="p-4 mt-auto border-t border-border/50">
-        <div className="relative rounded-xl p-4 bg-primary/5 mb-4 overflow-hidden group">
-           <div className="absolute inset-0 bg-gradient-to-tr from-primary/10 to-transparent opacity-50"></div>
-           <div className="relative z-10 flex flex-col items-center text-center">
-             <div className="w-16 h-16 rounded-full bg-white mb-2 shadow-sm flex items-center justify-center overflow-hidden">
-               <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=e2e8f0" alt="Avatar" className="w-14 h-14 object-cover" />
-             </div>
-           </div>
+        <div className="relative rounded-xl p-4 bg-gradient-to-br from-primary/10 to-primary/5 mb-4 overflow-hidden ring-1 ring-primary/10">
+          <div className="relative z-10 flex items-center gap-3">
+            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-primary text-white shadow-sm">
+              <Sparkles size={16} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-text-primary leading-tight">{planLabel}</p>
+              <p className="text-[11px] text-text-secondary">Current tier</p>
+            </div>
+            <button className="flex-shrink-0 rounded-full bg-primary px-2.5 py-1 text-[11px] font-bold text-white transition-colors hover:bg-primary-hover">
+              Upgrade
+            </button>
+          </div>
         </div>
 
         <button className="w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-sm font-medium text-text-primary hover:bg-gray-50">
           <div className="flex-1 flex items-center gap-3">
              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">
-               JD
+               {getInitials(displayName)}
              </div>
              <div className="text-left">
-               <p className="text-sm font-semibold text-text-primary leading-tight">John Doe</p>
-             <p className="text-xs text-text-secondary">{role}@xeacademy.com</p>
+               <p className="text-sm font-semibold text-text-primary leading-tight">{displayName}</p>
+             <p className="text-xs text-text-secondary">{email}</p>
              </div>
           </div>
         </button>

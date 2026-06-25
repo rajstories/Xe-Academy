@@ -4,10 +4,13 @@
  */
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
+import { AuthenticateWithRedirectCallback, useUser } from '@clerk/clerk-react';
 import { ArrowRight, Play, BookOpen, Presentation, Activity, Globe, ArrowUpRight, Users, Video, UserCheck, BadgeCheck, GraduationCap, Calendar, TrendingUp, MonitorSmartphone, Award, Star, BookmarkPlus, Clock, BarChart, CreditCard, Settings, CheckCircle, Facebook, Twitter, Instagram } from 'lucide-react';
 import { LiquidMetalButton } from './components/ui/liquid-metal-button';
 import { GatewayScreen } from './components/GatewayScreen';
 import { DashboardApp } from './components/DashboardApp';
+import { AuthFlow } from './components/AuthFlow';
+import { AuthRole, getRoleDashboardPath } from './lib/auth';
 
 import { XeLogo } from './components/XeLogo';
 
@@ -40,11 +43,8 @@ function Navbar() {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-3 items-center">
         {/* Left Zone */}
         <div className="flex justify-start">
-          <a href="#" className={`flex items-center gap-3 transition-colors duration-300 ${scrolled ? 'text-slate-900' : 'text-white'}`}>
-            <XeLogo className="h-6 md:h-7 w-auto" />
-            <span className="text-lg md:text-xl font-bold uppercase tracking-[0.2em] mt-0.5">
-              ACADEMY
-            </span>
+          <a href="#" className="flex items-center">
+            <XeLogo variant="full" theme={scrolled ? 'light' : 'dark'} className="h-7 md:h-8 w-auto transition-opacity duration-300" />
           </a>
         </div>
         
@@ -157,7 +157,7 @@ function Hero() {
 
       <div className="relative z-20 w-full max-w-5xl mx-auto flex flex-col items-center text-center">
         {/* Main Headline */}
-        <h1 
+        <h1
           className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight"
         >
           <span className="inline-block whitespace-nowrap">
@@ -195,8 +195,8 @@ function Metrics() {
   ];
 
   return (
-    <section className="bg-white py-20 px-6">
-      <div className="max-w-6xl mx-auto bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.06)] overflow-hidden">
+    <section className="bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFCF4_48%,#F5E6A8_100%)] py-20 px-6">
+      <div className="max-w-6xl mx-auto bg-white/68 backdrop-blur-xl rounded-3xl border border-white/80 shadow-[0_18px_60px_rgba(15,23,42,0.08)] overflow-hidden">
         <div className="grid grid-cols-1 md:grid-cols-5 divide-y md:divide-y-0 md:divide-x divide-slate-100">
           {stats.map((stat, i) => {
             const Icon = stat.icon;
@@ -205,11 +205,11 @@ function Metrics() {
                 key={i} 
                 className="flex flex-col items-center justify-center text-center p-8 transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:shadow-violet-500/5 cursor-default"
               >
-                <Icon className="w-8 h-8 text-indigo-600 mb-4" />
-                <span className="text-4xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-violet-600 to-indigo-600 pb-1">
+                <Icon className="w-8 h-8 text-slate-950 mb-4" />
+                <span className="text-4xl font-extrabold tracking-tight text-slate-950 pb-1">
                   {stat.value}
                 </span>
-                <span className="mt-2 text-[10px] uppercase tracking-widest text-slate-400 font-bold">
+                <span className="mt-2 text-[10px] uppercase tracking-widest text-slate-700 font-bold">
                   {stat.label}
                 </span>
               </div>
@@ -221,9 +221,71 @@ function Metrics() {
   );
 }
 
+function PremiumFeatureIcon({ type }: { type: 'courses' | 'sessions' | 'progress' | 'devices' | 'certificates' }) {
+  const gradientId = `premium-feature-${type}`;
+  const iconPaths = {
+    courses: (
+      <>
+        <path d="M16 19.5 32 13l16 6.5-16 6.5-16-6.5Z" fill={`url(#${gradientId})`} />
+        <path d="M22 25v8.5c0 2.4 4.6 4.5 10 4.5s10-2.1 10-4.5V25" fill="none" stroke="#312E81" strokeWidth="3" strokeLinecap="round" />
+        <path d="M48 20.5v10" stroke="#FBBF24" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="48" cy="34" r="3" fill="#FBBF24" />
+      </>
+    ),
+    sessions: (
+      <>
+        <rect x="17" y="18" width="30" height="30" rx="8" fill={`url(#${gradientId})`} />
+        <path d="M24 16v7M40 16v7M22 29h20" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+        <path d="m29 38 5-3v6l-5-3Z" fill="#FBBF24" />
+        <circle cx="46" cy="20" r="6" fill="#2DD4BF" stroke="#fff" strokeWidth="3" />
+      </>
+    ),
+    progress: (
+      <>
+        <path d="M18 43 30 31l8 8 12-15" stroke={`url(#${gradientId})`} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M43 24h7v7" stroke={`url(#${gradientId})`} strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" />
+        <rect x="14" y="44" width="40" height="4" rx="2" fill="#E0E7FF" />
+        <circle cx="30" cy="31" r="4" fill="#FBBF24" />
+        <circle cx="38" cy="39" r="4" fill="#2DD4BF" />
+      </>
+    ),
+    devices: (
+      <>
+        <rect x="14" y="19" width="31" height="23" rx="5" fill={`url(#${gradientId})`} />
+        <rect x="37" y="29" width="13" height="20" rx="4" fill="#fff" stroke="#312E81" strokeWidth="3" />
+        <path d="M22 48h17" stroke="#312E81" strokeWidth="3" strokeLinecap="round" />
+        <path d="M25 28h10M25 34h7" stroke="#fff" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="43.5" cy="44" r="1.8" fill="#FBBF24" />
+      </>
+    ),
+    certificates: (
+      <>
+        <path d="M32 14c4 5 9 4 12 4 .5 5 3 8 6 11-4 3-5 8-6 13-5-.4-8 1.5-12 5-4-3.5-7-5.4-12-5-1-5-2-10-6-13 3-3 5.5-6 6-11 3 0 8 1 12-4Z" fill={`url(#${gradientId})`} />
+        <path d="m24 31 5 5 11-12" stroke="#fff" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="m28 45-4 8 8-3 8 3-4-8" fill="#FBBF24" />
+      </>
+    ),
+  };
+
+  return (
+    <div className="h-16 w-16 rounded-3xl bg-white shadow-[0_14px_35px_rgba(79,70,229,0.18)] ring-1 ring-indigo-100 flex items-center justify-center transition-transform duration-300 ease-out group-hover:scale-110">
+      <svg className="h-11 w-11 drop-shadow-sm" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id={gradientId} x1="14" y1="14" x2="52" y2="52" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#7C3AED" />
+            <stop offset="1" stopColor="#4F46E5" />
+          </linearGradient>
+        </defs>
+        {iconPaths[type]}
+      </svg>
+    </div>
+  );
+}
+
 function Ecosystem() {
   return (
-    <section className="pb-24 px-6 max-w-7xl mx-auto">
+    <section className="bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFCF4_48%,#F5E6A8_100%)] pb-24 px-6">
+      <div className="max-w-7xl mx-auto">
       <div className="text-center mb-16 mt-8">
         <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 text-center">
           Everything you need to learn and grow
@@ -236,9 +298,7 @@ function Ecosystem() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Row 1 - Card 1 */}
         <div className="bg-white border border-slate-200/60 rounded-[2rem] p-10 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 group flex flex-col">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-50 text-indigo-600 flex items-center justify-center ring-1 ring-inset ring-indigo-500/10 transition-transform duration-300 ease-out group-hover:scale-110">
-            <GraduationCap className="w-6 h-6" />
-          </div>
+          <PremiumFeatureIcon type="courses" />
           <h3 className="text-xl font-bold text-slate-900 tracking-tight mt-6 mb-3">Premium Courses</h3>
           <p className="text-slate-500 leading-relaxed text-sm lg:text-base">
             High-definition educational content produced by industry leaders. Structured to take you from foundational concepts to architecting scalable solutions.
@@ -247,9 +307,7 @@ function Ecosystem() {
 
         {/* Row 1 - Card 2 */}
         <div className="bg-white border border-slate-200/60 rounded-[2rem] p-10 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 group flex flex-col">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-50 text-indigo-600 flex items-center justify-center ring-1 ring-inset ring-indigo-500/10 transition-transform duration-300 ease-out group-hover:scale-110">
-            <Calendar className="w-6 h-6" />
-          </div>
+          <PremiumFeatureIcon type="sessions" />
           <h3 className="text-xl font-bold text-slate-900 tracking-tight mt-6 mb-3">Live Sessions</h3>
           <p className="text-slate-500 leading-relaxed text-sm lg:text-base">
             Weekly interactive workshops where you can ask questions directly, receive real-time feedback, and collaborate with your cohort.
@@ -258,9 +316,7 @@ function Ecosystem() {
 
         {/* Row 1 - Card 3 */}
         <div className="bg-white border border-slate-200/60 rounded-[2rem] p-10 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 group flex flex-col">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-50 text-indigo-600 flex items-center justify-center ring-1 ring-inset ring-indigo-500/10 transition-transform duration-300 ease-out group-hover:scale-110">
-            <TrendingUp className="w-6 h-6" />
-          </div>
+          <PremiumFeatureIcon type="progress" />
           <h3 className="text-xl font-bold text-slate-900 tracking-tight mt-6 mb-3">Track Progress</h3>
           <p className="text-slate-500 leading-relaxed text-sm lg:text-base">
             AI-driven analytics to monitor your learning speed, project quality, and overall knowledge retention automatically.
@@ -270,9 +326,7 @@ function Ecosystem() {
         {/* Row 2 - Card 4 (Learn Anywhere) - Spans 2 cols */}
         <div className="bg-white border border-slate-200/60 rounded-[2rem] p-10 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 group flex flex-col md:flex-row items-center md:col-span-2 overflow-hidden relative">
           <div className="flex-1 relative z-10 md:pr-8">
-            <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-50 text-indigo-600 flex items-center justify-center ring-1 ring-inset ring-indigo-500/10 transition-transform duration-300 ease-out group-hover:scale-110">
-              <MonitorSmartphone className="w-6 h-6" />
-            </div>
+            <PremiumFeatureIcon type="devices" />
             <h3 className="text-xl font-bold text-slate-900 tracking-tight mt-6 mb-3">Learn Anywhere</h3>
             <p className="text-slate-500 leading-relaxed text-sm lg:text-base max-w-sm">
               Our cross-platform mobile and desktop experience ensures you never lose a minute of your learning journey.
@@ -308,14 +362,13 @@ function Ecosystem() {
 
         {/* Row 2 - Card 5 (Certificates) - Spans 1 col */}
         <div className="bg-white border border-slate-200/60 rounded-[2rem] p-10 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-xl hover:shadow-indigo-500/10 group flex flex-col md:col-span-1">
-          <div className="h-14 w-14 rounded-2xl bg-gradient-to-br from-violet-100 to-indigo-50 text-indigo-600 flex items-center justify-center ring-1 ring-inset ring-indigo-500/10 transition-transform duration-300 ease-out group-hover:scale-110">
-            <Award className="w-6 h-6" />
-          </div>
+          <PremiumFeatureIcon type="certificates" />
           <h3 className="text-xl font-bold text-slate-900 tracking-tight mt-6 mb-3">Certificates</h3>
           <p className="text-slate-500 leading-relaxed text-sm lg:text-base">
             Industry-recognized credentials that you can instantly add to your LinkedIn or professional portfolio.
           </p>
         </div>
+      </div>
       </div>
     </section>
   );
@@ -365,7 +418,7 @@ function PopularCourses() {
   ];
 
   return (
-    <section className="bg-slate-50 py-24">
+    <section className="bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFCF4_48%,#F5E6A8_100%)] py-24">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div>
@@ -415,8 +468,8 @@ function PopularCourses() {
 function LiveSessions() {
   const { navigate } = useNavigation();
   return (
-    <section className="py-24 max-w-7xl mx-auto px-6">
-      <div className="bg-gradient-to-br from-violet-600 to-indigo-700 rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden shadow-2xl shadow-indigo-500/20">
+    <section className="bg-white py-24 px-6">
+      <div className="max-w-7xl mx-auto bg-gradient-to-br from-violet-600 to-indigo-700 rounded-[2.5rem] p-8 md:p-16 relative overflow-hidden shadow-2xl shadow-indigo-500/20">
         <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none"></div>
         <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
           <div className="lg:col-span-5 text-white">
@@ -472,8 +525,8 @@ function LiveSessions() {
 function CreatorSection() {
   const { navigate } = useNavigation();
   return (
-    <section className="py-24 max-w-7xl mx-auto px-6 overflow-hidden">
-      <div className="flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
+    <section className="bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFCF4_48%,#F5E6A8_100%)] py-24 px-6 overflow-hidden">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row items-center gap-16 lg:gap-20">
         <div className="flex-1 max-w-xl">
           <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-4 block">For Creators</span>
           <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">Turn your knowledge into impact</h2>
@@ -563,7 +616,7 @@ function Testimonials() {
   ];
 
   return (
-    <section className="bg-white py-24 px-6 overflow-hidden">
+    <section className="bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFCF4_48%,#F5E6A8_100%)] py-24 px-6 overflow-hidden">
       <div className="max-w-7xl mx-auto text-center">
         <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900">The Global Collective</h2>
         <p className="text-slate-500 max-w-2xl mx-auto text-center mt-4 mb-16 text-lg">See how ambitious minds are accelerating their trajectories through our immersive cohorts.</p>
@@ -597,8 +650,8 @@ function Testimonials() {
 function FinalCTA() {
   const { navigate } = useNavigation();
   return (
-    <section className="py-24 max-w-7xl mx-auto px-6">
-      <div className="bg-gradient-to-r from-violet-600 to-indigo-600 rounded-[3rem] py-20 px-8 text-center text-white relative overflow-hidden shadow-2xl shadow-indigo-500/20">
+    <section className="bg-white py-24 px-6">
+      <div className="max-w-7xl mx-auto bg-gradient-to-r from-violet-600 to-indigo-600 rounded-[3rem] py-20 px-8 text-center text-white relative overflow-hidden shadow-2xl shadow-indigo-500/20">
         <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.1),transparent)] pointer-events-none"></div>
         <div className="relative z-10 max-w-2xl mx-auto">
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-6 leading-tight">Ready to transform your future?</h2>
@@ -623,11 +676,8 @@ function Footer() {
       <div className="max-w-7xl mx-auto">
         <div className="grid grid-cols-2 md:grid-cols-6 gap-12 mb-20">
           <div className="col-span-2 md:col-span-2 pr-8">
-            <a href="#" className="flex items-center gap-3 text-indigo-600 mb-6">
-              <XeLogo className="h-8 w-auto" />
-              <span className="text-2xl font-bold uppercase tracking-[0.2em] mt-0.5 text-indigo-700">
-                ACADEMY
-              </span>
+            <a href="#" className="flex items-center mb-6">
+              <XeLogo variant="full" theme="light" className="h-9 w-auto" />
             </a>
             <p className="mt-4 text-slate-700 text-base leading-relaxed max-w-sm mb-8">
               Empowering the world's most curious minds through agile, high-end education.
@@ -701,19 +751,70 @@ function Footer() {
 }
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const { isLoaded, isSignedIn, user } = useUser();
+  const [currentPath, setCurrentPath] = useState(() => `${window.location.pathname}${window.location.search}`);
+
+  const navigateTo = (target: string) => {
+    const nextPath = target.startsWith('/') ? target : target === 'gateway' ? '/gateway' : '/';
+    window.history.pushState({}, '', nextPath);
+    setCurrentPath(`${window.location.pathname}${window.location.search}`);
+  };
 
   useEffect(() => {
-    // Check if user is logged in
-    const activeRole = localStorage.getItem('xe_active_role');
-    if (activeRole) {
-      setCurrentPage('dashboard');
-    }
+    const syncPath = () => setCurrentPath(`${window.location.pathname}${window.location.search}`);
+    window.addEventListener('popstate', syncPath);
+    return () => window.removeEventListener('popstate', syncPath);
   }, []);
 
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    const role = user?.publicMetadata?.role as string | undefined;
+    const pathname = window.location.pathname;
+    if (!role && !pathname.startsWith('/onboarding') && !pathname.startsWith('/auth')) {
+      navigateTo('/onboarding');
+    } else if (role && (pathname === '/' || pathname.startsWith('/auth') || pathname.startsWith('/onboarding'))) {
+      navigateTo(getRoleDashboardPath(role));
+    }
+  }, [isLoaded, isSignedIn, user?.publicMetadata?.role]);
+
+  const pathname = currentPath.split('?')[0];
+  const params = new URLSearchParams(currentPath.split('?')[1] || '');
+  const requestedRole = (params.get('role') as AuthRole | null) || null;
+  const role = user?.publicMetadata?.role as string | undefined;
+
+  if (pathname === '/auth/sso-callback') {
+    return <AuthenticateWithRedirectCallback />;
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-white text-slate-500">
+        Loading XE Academy...
+      </div>
+    );
+  }
+
+  if (pathname.startsWith('/auth') || pathname.startsWith('/onboarding') || (!isSignedIn && (pathname.startsWith('/dashboard') || pathname.startsWith('/studio')))) {
+    return (
+      <AuthFlow
+        initialMode={pathname.startsWith('/onboarding') ? 'onboarding' : params.get('mode') === 'sign-up' ? 'sign-up' : 'sign-in'}
+        initialRole={requestedRole}
+        onBackHome={() => navigateTo('/')}
+      />
+    );
+  }
+
+  if (isSignedIn && !role) {
+    return <AuthFlow initialMode="onboarding" initialRole={requestedRole} onBackHome={() => navigateTo('/')} />;
+  }
+
+  if (pathname.startsWith('/dashboard') || pathname.startsWith('/studio') || pathname.startsWith('/admin')) {
+    return <DashboardApp initialRole={(role as any) || (pathname.startsWith('/studio') ? 'creator' : 'student')} />;
+  }
+
   return (
-    <NavigationContext.Provider value={{ navigate: setCurrentPage }}>
-      {currentPage === 'home' ? (
+    <NavigationContext.Provider value={{ navigate: navigateTo }}>
+      {pathname !== '/gateway' ? (
         <div className="min-h-screen bg-white font-sans selection:bg-[#004BFF] selection:text-white">
           <Navbar />
           <main>
@@ -728,10 +829,8 @@ export default function App() {
           </main>
           <Footer />
         </div>
-      ) : currentPage === 'dashboard' ? (
-        <DashboardApp />
       ) : (
-        <GatewayScreen onBack={() => setCurrentPage('home')} />
+        <GatewayScreen onBack={() => navigateTo('/')} />
       )}
     </NavigationContext.Provider>
   );

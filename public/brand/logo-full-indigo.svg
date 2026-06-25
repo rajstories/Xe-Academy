@@ -1,0 +1,9 @@
+<svg viewBox="0 0 700 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="XE Academy">
+  <title>XE Academy</title>
+  <rect x="-75" y="-17" width="150" height="34" transform="translate(82 80) rotate(50)" fill="#6C5CE7"/>
+  <rect x="-75" y="-17" width="150" height="34" transform="translate(82 80) rotate(-50)" fill="#6C5CE7"/>
+  <path d="M130,0H190L210,20L190,40H130Z" fill="#6C5CE7"/>
+  <path d="M130,65H175L195,80L175,95H130Z" fill="#6C5CE7"/>
+  <path d="M130,120H190L210,140L190,160H130Z" fill="#6C5CE7"/>
+  <text x="248" y="80" font-family="Inter, Arial, sans-serif" font-size="72" font-weight="800" letter-spacing="6" fill="#6C5CE7" dominant-baseline="central">ACADEMY</text>
+</svg>

@@ -1,7 +1,9 @@
 'use client';
 
-import { Bell, ChevronDown } from 'lucide-react';
+import { Bell, ChevronDown, LogOut } from 'lucide-react';
+import { useClerk, useUser } from '@clerk/clerk-react';
 import { Role, View } from '../types';
+import { getUserDisplayName } from '../lib/auth';
 
 interface HeaderProps {
   role: Role;
@@ -10,10 +12,14 @@ interface HeaderProps {
 }
 
 export default function Header({ role, setRole, activeView }: HeaderProps) {
+  const { signOut } = useClerk();
+  const { user } = useUser();
+  const firstName = getUserDisplayName(user || undefined);
+
   const getHeaderInfo = (view: string, currentRole: Role) => {
     if (currentRole === 'student') {
       switch (view) {
-        case 'dashboard': return { title: 'Dashboard', subtitle: 'Welcome back, Prince 👋' };
+        case 'dashboard': return { title: `Welcome back, ${firstName}`, subtitle: 'Your learning command center.' };
         case 'my-courses': return { title: 'My Courses', subtitle: 'Continue your learning journey.' };
         case 'live-classes': return { title: 'Live Sessions', subtitle: 'Manage and join your upcoming live classes.' };
         case 'schedule': return { title: 'Schedule', subtitle: 'Organize your learning calendar.' };
@@ -21,11 +27,11 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
         case 'community': return { title: 'Community', subtitle: 'Connect and collaborate with learners.' };
         case 'settings': return { title: 'Settings', subtitle: 'Manage your account preferences.' };
         case 'course-learning': return { title: 'Course Learning', subtitle: 'Mastering your currently selected course.' };
-        default: return { title: 'Dashboard', subtitle: 'Welcome back, Prince 👋' };
+        default: return { title: 'Dashboard', subtitle: `Welcome back, ${firstName}` };
       }
     } else if (currentRole === 'creator') {
       switch (view) {
-        case 'dashboard': return { title: 'Creator Studio', subtitle: 'Revenue, sales, students, and watch-time intelligence.' };
+        case 'dashboard': return { title: `Welcome back, ${firstName}`, subtitle: 'Revenue, sales, students, and watch-time intelligence.' };
         case 'my-courses': return { title: 'My Courses', subtitle: 'Create, publish, duplicate, and manage premium course tracks.' };
         case 'course-builder': return { title: 'Course Builder', subtitle: 'Structure and edit your course contents.' };
         case 'students': return { title: 'Students', subtitle: 'Search, filter, export, and manage enrolled learners.' };
@@ -34,7 +40,7 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
         case 'live-studio': return { title: 'Live Studio', subtitle: 'You are currently live.' };
         case 'revenue': return { title: 'Revenue', subtitle: 'Track your earnings and payouts.' };
         case 'settings': return { title: 'Settings', subtitle: 'Manage your creator profile.' };
-        default: return { title: 'Creator Studio', subtitle: 'Overview of your creator dashboard.' };
+        default: return { title: 'Creator Studio', subtitle: `Welcome back, ${firstName}.` };
       }
     } else if (currentRole === 'admin') {
       switch (view) {
@@ -70,19 +76,23 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
         </button>
 
         <div className="relative group">
-          <button className="flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg font-medium text-sm transition-colors hover:bg-primary/15">
+          <button className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium text-sm transition-colors hover:bg-primary/15">
+            <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-white">
+              {role.slice(0, 2).toUpperCase()}
+            </span>
             <span className="capitalize">{role} Profile</span>
             <ChevronDown size={16} />
           </button>
           <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
             <button
-              onClick={() => {
+              onClick={async () => {
                 localStorage.removeItem('xe_active_role');
-                window.location.href = '/';
+                await signOut({ redirectUrl: '/' });
               }}
-              className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors font-medium"
+              className="flex w-full items-center gap-2 text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors font-medium"
             >
-              🚪 Log Out
+              <LogOut size={15} />
+              Log Out
             </button>
           </div>
         </div>

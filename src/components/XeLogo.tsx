@@ -1,17 +1,14 @@
-import { SVGProps } from "react";
+interface XeLogoProps {
+  /** 'full' = icon + "ACADEMY" wordmark. 'icon' = mark only, for compact/mobile nav. */
+  variant?: 'full' | 'icon';
+  /** 'light' = indigo mark for white/light backgrounds. 'dark' = white mark for dark/photo backgrounds. */
+  theme?: 'light' | 'dark';
+  className?: string;
+}
 
-export function XeLogo(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg 
-      viewBox="0 0 90 40" 
-      fill="currentColor" 
-      xmlns="http://www.w3.org/2000/svg"
-      {...props}
-    >
-      <path d="M 0 0 H 30 L 50 20 L 30 40 H 0 L 20 20 Z" />
-      <path d="M 40 0 H 90 V 10 H 50 Z" />
-      <path d="M 50 30 H 90 V 40 H 40 Z" />
-      <path d="M 55 15 L 60 20 L 55 25 H 75 V 15 Z" />
-    </svg>
-  );
+// Renders the approved brand asset for the given context — never recolors
+// or distorts the mark. See public/brand/ for the source files.
+export function XeLogo({ variant = 'full', theme = 'light', className }: XeLogoProps) {
+  const color = theme === 'dark' ? 'white' : 'indigo';
+  return <img src={`/brand/logo-${variant}-${color}.svg`} alt="XE Academy" className={className} />;
 }

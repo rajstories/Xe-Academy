@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import Sidebar from './Sidebar';
 import Header from './Header';
 import StudentDashboard from './StudentDashboard';
@@ -25,17 +26,23 @@ import { ShieldAlert } from 'lucide-react';
 
 import { Role, View } from '../types';
 
-export function DashboardApp() {
+interface DashboardAppProps {
+  initialRole?: Role;
+}
+
+export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
+  const { user, isLoaded } = useUser();
   const [userRole, setUserRole] = useState<Role | null>(null);
-  const [currentRouteRole, setCurrentRouteRole] = useState<Role>('student');
+  const [currentRouteRole, setCurrentRouteRole] = useState<Role>(initialRole);
   const [currentView, setCurrentView] = useState<View>('dashboard');
 
   useEffect(() => {
-    // Read user identity from local storage
-    const savedRole = (localStorage.getItem('xe_active_role') as Role) || 'student';
-    setUserRole(savedRole);
-    setCurrentRouteRole(savedRole);
-  }, []);
+    if (!isLoaded) return;
+    const clerkRole = user?.publicMetadata?.role as Role | undefined;
+    const resolvedRole = clerkRole || initialRole;
+    setUserRole(resolvedRole);
+    setCurrentRouteRole(resolvedRole);
+  }, [initialRole, isLoaded, user?.publicMetadata?.role]);
 
   const setRole = (newRole: Role) => {
     localStorage.setItem('xe_active_role', newRole);

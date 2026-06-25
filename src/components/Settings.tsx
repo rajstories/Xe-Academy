@@ -1,15 +1,20 @@
 'use client';
 
 import { useState } from 'react';
+import { useUser } from '@clerk/clerk-react';
 import { User, Bell, Lock, CreditCard, Monitor, Save, Settings as SettingsIcon } from 'lucide-react';
 import { View } from '../types';
+import { getFullName, getInitials } from '../lib/auth';
 
 interface Props {
   setView: (view: View) => void;
 }
 
 export default function Settings({ setView }: Props) {
+  const { user } = useUser();
   const [activeTab, setActiveTab] = useState('profile');
+  const fullName = getFullName(user || undefined);
+  const email = user?.primaryEmailAddress?.emailAddress || '';
 
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
@@ -55,7 +60,11 @@ export default function Settings({ setView }: Props) {
                 
                 <div className="flex flex-col sm:flex-row items-center gap-6 mb-8">
                   <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden border border-border">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&backgroundColor=e2e8f0" alt="Avatar" className="w-full h-full object-cover" />
+                    {user?.imageUrl ? (
+                      <img src={user.imageUrl} alt={fullName} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-xl font-bold text-primary">{getInitials(fullName)}</span>
+                    )}
                   </div>
                   <div className="flex gap-3">
                     <button className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-hover transition-colors shadow-sm">
@@ -70,15 +79,15 @@ export default function Settings({ setView }: Props) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-2">First Name</label>
-                    <input type="text" defaultValue="John" className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
+                    <input type="text" value={user?.firstName || ''} readOnly className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-text-primary mb-2">Last Name</label>
-                    <input type="text" defaultValue="Doe" className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
+                    <input type="text" value={user?.lastName || ''} readOnly className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-text-primary mb-2">Email Address</label>
-                    <input type="email" defaultValue="student@xeacademy.com" className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-secondary" readOnly />
+                    <input type="email" value={email} className="w-full px-4 py-2.5 bg-white border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-text-secondary" readOnly />
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-text-primary mb-2">Bio</label>

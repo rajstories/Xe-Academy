@@ -1,0 +1,8 @@
+<svg viewBox="0 0 220 160" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="XE Academy">
+  <title>XE Academy</title>
+  <rect x="-75" y="-17" width="150" height="34" transform="translate(82 80) rotate(50)" fill="#FFFFFF"/>
+  <rect x="-75" y="-17" width="150" height="34" transform="translate(82 80) rotate(-50)" fill="#FFFFFF"/>
+  <path d="M130,0H190L210,20L190,40H130Z" fill="#FFFFFF"/>
+  <path d="M130,65H175L195,80L175,95H130Z" fill="#FFFFFF"/>
+  <path d="M130,120H190L210,140L190,160H130Z" fill="#FFFFFF"/>
+</svg>

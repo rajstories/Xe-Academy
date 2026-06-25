@@ -212,6 +212,10 @@ export default function CourseLearning({ setView }: Props) {
     []
   );
   const lessonCount = useMemo(() => curriculumData.flatMap((module) => module.lessons).length, []);
+  const activeModuleTitle = useMemo(
+    () => curriculumData.find((module) => module.lessons.some((lesson) => lesson.id === currentLesson.id))?.title ?? '',
+    [currentLesson.id]
+  );
   const completion = Math.round((completedLessons / lessonCount) * 100);
 
   const seekTo = (seconds: number) => {
@@ -330,50 +334,51 @@ export default function CourseLearning({ setView }: Props) {
   };
 
   return (
-    <div className="min-h-[calc(100vh-96px)] bg-slate-50 px-4 py-5 text-slate-900 sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-[1800px] flex-col gap-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
+    <div className="min-h-[calc(100vh-96px)] bg-[#f8fafc] px-4 py-8 text-slate-900 sm:px-8 lg:px-10">
+      <div className="mx-auto flex max-w-[1900px] flex-col gap-8">
+        <div className="flex flex-wrap items-start justify-between gap-5">
+          <div className="flex items-start gap-4">
             <button
               onClick={() => setView('dashboard')}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-600 shadow-sm transition-all hover:border-indigo-200 hover:text-indigo-700 active:scale-95"
+              className="mt-1 inline-flex h-10 w-10 items-center justify-center rounded-full bg-white text-slate-500 shadow-sm ring-1 ring-slate-200/70 transition-all hover:text-indigo-600 hover:ring-indigo-200 active:scale-95"
               aria-label="Back to dashboard"
             >
               <ArrowLeft size={18} />
             </button>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-indigo-600">XE Academy</p>
-              <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">Course Learning</h1>
+              <p className="text-xs font-medium uppercase tracking-[0.22em] text-indigo-600">XE Academy Learning</p>
+              <h1 className="mt-1 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">{currentLesson.title}</h1>
+              <p className="mt-2 text-sm font-medium text-slate-500">{activeModuleTitle} · {formatTime(currentSeconds)} elapsed</p>
             </div>
           </div>
-          <button className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-all hover:border-indigo-200 hover:text-indigo-700 active:scale-95">
+          <button className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2 text-sm font-medium text-slate-600 ring-1 ring-slate-200/70 transition-all hover:bg-white hover:text-indigo-600 active:scale-95">
             <Bookmark size={16} />
-            Bookmark Lesson
+            Bookmark
           </button>
         </div>
 
-        <div className="grid min-h-[760px] grid-cols-1 gap-5 xl:grid-cols-[320px_minmax(0,1fr)_360px]">
-          <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="border-b border-slate-200 p-5">
+        <div className="grid min-h-[760px] grid-cols-1 gap-8 2xl:grid-cols-[300px_minmax(760px,1fr)_340px]">
+          <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl bg-white/80 shadow-sm ring-1 ring-slate-200/60">
+            <div className="p-5">
               <div className="flex items-center justify-between">
                 <div>
-                  <h2 className="font-bold text-slate-900">Course Content</h2>
-                  <p className="mt-1 text-sm text-slate-500">{completedLessons} of {lessonCount} lessons complete</p>
+                  <h2 className="text-sm font-semibold text-slate-900">Course Content</h2>
+                  <p className="mt-1 text-xs font-medium text-slate-500">{completedLessons} of {lessonCount} lessons complete</p>
                 </div>
-                <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">{completion}%</span>
+                <span className="rounded-full bg-indigo-50 px-3 py-1 text-xs font-semibold text-indigo-700">{completion}%</span>
               </div>
-              <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-                <div className="h-full rounded-full bg-indigo-600" style={{ width: `${completion}%` }} />
+              <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-indigo-50">
+                <div className="h-full rounded-full bg-indigo-600/80" style={{ width: `${completion}%` }} />
               </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-3">
+            <div className="flex-1 overflow-y-auto px-3 pb-4">
               {curriculumData.map((module) => (
-                <section key={module.title} className="mb-5 last:mb-0">
-                  <h3 className="mb-2 px-2 text-xs font-bold uppercase tracking-[0.16em] text-slate-400">
+                <section key={module.title} className="border-t border-slate-100 py-4 first:border-t-0">
+                  <h3 className="mb-3 px-2 text-[11px] font-medium uppercase tracking-[0.18em] text-slate-400">
                     {module.title}
                   </h3>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     {module.lessons.map((lesson) => {
                       const isActive = lesson.id === currentLesson.id;
 
@@ -381,23 +386,27 @@ export default function CourseLearning({ setView }: Props) {
                         <div key={lesson.id} className="rounded-xl">
                           <button
                             onClick={() => handleLessonSelect(lesson, 0)}
-                            className={`flex w-full gap-3 rounded-xl px-3 py-3 text-left transition-all active:scale-95 ${
+                            className={`flex w-full gap-3 rounded-xl px-3 py-3 text-left transition-all active:scale-[0.99] ${
                               isActive
-                                ? 'bg-indigo-50 text-indigo-700'
-                                : 'text-slate-700 hover:bg-slate-50 hover:text-slate-900'
+                                ? 'bg-indigo-50/80 text-indigo-700 ring-1 ring-indigo-100'
+                                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                             }`}
                           >
                             <span className="mt-0.5">
                               {lesson.completed ? (
-                                <CheckCircle size={17} className="text-emerald-500" />
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">
+                                  <CheckCircle size={12} />
+                                </span>
                               ) : isActive ? (
-                                <PlayCircle size={17} className="text-indigo-600" />
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full bg-indigo-600 text-white">
+                                  <PlayCircle size={12} />
+                                </span>
                               ) : (
-                                <Circle size={17} className="text-slate-300" />
+                                <Circle size={16} className="text-slate-300" />
                               )}
                             </span>
                             <span className="min-w-0 flex-1">
-                              <span className="block text-sm font-semibold leading-snug">{lesson.title}</span>
+                              <span className="block text-sm font-medium leading-snug">{lesson.title}</span>
                               <span className="mt-1 flex items-center gap-1.5 text-xs text-slate-500">
                                 <Clock3 size={13} />
                                 {lesson.durationLabel}
@@ -405,21 +414,6 @@ export default function CourseLearning({ setView }: Props) {
                             </span>
                             <ChevronRight size={16} className={isActive ? 'text-indigo-500' : 'text-slate-300'} />
                           </button>
-
-                          {isActive && (
-                            <div className="ml-9 mt-1 space-y-1 border-l border-indigo-100 pl-3">
-                              {lesson.timestamps.map((timestamp) => (
-                                <button
-                                  key={`${lesson.id}-${timestamp.time}`}
-                                  onClick={() => handleLessonSelect(lesson, timestamp.time)}
-                                  className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-left text-xs font-medium text-slate-500 transition-all hover:bg-indigo-50 hover:text-indigo-700 active:scale-95"
-                                >
-                                  <span>{timestamp.label}</span>
-                                  <span className="font-semibold text-indigo-500">@{formatTime(timestamp.time)}</span>
-                                </button>
-                              ))}
-                            </div>
-                          )}
                         </div>
                       );
                     })}
@@ -429,10 +423,10 @@ export default function CourseLearning({ setView }: Props) {
             </div>
           </aside>
 
-          <main className="flex min-w-0 flex-col gap-4">
+          <main className="flex min-w-0 flex-col gap-6">
             <section
               ref={playerContainerRef}
-              className="group relative aspect-video min-h-[360px] overflow-hidden rounded-2xl bg-black shadow-[0_24px_70px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/5"
+              className="group relative aspect-video min-h-[420px] overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/10"
             >
               <ReactPlayer
                 ref={playerRef as any}
@@ -475,17 +469,17 @@ export default function CourseLearning({ setView }: Props) {
               {!playing && (
                 <button
                   onClick={() => setPlaying(true)}
-                  className="absolute left-1/2 top-1/2 z-30 flex h-24 w-24 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 ring-8 ring-white/10 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
+                  className="absolute left-1/2 top-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 ring-8 ring-white/10 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
                   aria-label="Play video"
                 >
-                  <Play size={40} className="ml-1 fill-current" />
+                  <Play size={34} className="ml-1 fill-current" />
                 </button>
               )}
 
-              <div className={`absolute inset-x-0 bottom-0 z-40 p-4 transition-all duration-300 ${playing ? 'translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100' : 'translate-y-0 opacity-100'}`}>
-                <div className="rounded-2xl border border-white/10 bg-slate-900/80 p-4 text-white shadow-2xl backdrop-blur-sm">
+              <div className={`absolute inset-x-0 bottom-0 z-40 p-5 transition-all duration-300 ${playing ? 'translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100' : 'translate-y-0 opacity-100'}`}>
+                <div className="rounded-xl bg-slate-950/75 p-3 text-white shadow-2xl backdrop-blur-md">
                   <div
-                    className="relative mb-4 h-2 cursor-pointer rounded-full bg-white/15"
+                    className="relative mb-3 h-1.5 cursor-pointer rounded-full bg-white/15"
                     onPointerDown={handleProgressPointerDown}
                     onPointerMove={handleProgressPointerMove}
                     onPointerUp={handleProgressPointerUp}
@@ -496,27 +490,27 @@ export default function CourseLearning({ setView }: Props) {
                     aria-valuenow={Math.round(currentSeconds)}
                     tabIndex={0}
                   >
-                    <div className="absolute inset-y-0 left-0 rounded-full bg-indigo-500" style={{ width: `${played * 100}%` }} />
+                    <div className="absolute inset-y-0 left-0 rounded-full bg-indigo-400" style={{ width: `${played * 100}%` }} />
                     <div
-                      className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-white bg-indigo-500 shadow-lg transition-transform group-hover:scale-110"
-                      style={{ left: `calc(${played * 100}% - 8px)` }}
+                      className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-white bg-indigo-500 shadow-lg transition-transform group-hover:scale-110"
+                      style={{ left: `calc(${played * 100}% - 7px)` }}
                     />
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="flex min-w-0 flex-1 items-center gap-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <button
                         onClick={() => setPlaying((isPlaying) => !isPlaying)}
-                        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all hover:bg-indigo-100 active:scale-95"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all hover:bg-indigo-100 active:scale-95"
                         aria-label={playing ? 'Pause video' : 'Play video'}
                       >
-                        {playing ? <Pause size={20} className="fill-current" /> : <Play size={20} className="ml-0.5 fill-current" />}
+                        {playing ? <Pause size={18} className="fill-current" /> : <Play size={18} className="ml-0.5 fill-current" />}
                       </button>
 
                       <div className="flex items-center gap-2">
                         <Volume2 size={18} className="text-white/80" />
                         <div
-                          className="h-2 w-20 cursor-pointer rounded-full bg-white/15 sm:w-28"
+                          className="h-1.5 w-20 cursor-pointer rounded-full bg-white/15 sm:w-24"
                           onPointerDown={handleVolumePointer}
                           onPointerMove={(event) => {
                             if (event.buttons === 1) handleVolumePointer(event);
@@ -531,7 +525,7 @@ export default function CourseLearning({ setView }: Props) {
                         </div>
                       </div>
 
-                      <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-white/85">
+                      <span className="whitespace-nowrap text-xs font-medium tabular-nums text-white/80">
                         {formatTime(currentSeconds)} / {formatTime(duration)}
                       </span>
                     </div>
@@ -540,7 +534,7 @@ export default function CourseLearning({ setView }: Props) {
                       <select
                         value={playbackRate}
                         onChange={(event) => setPlaybackRate(Number(event.target.value))}
-                        className="h-10 rounded-full border border-white/10 bg-white/10 px-3 text-sm font-bold text-white outline-none transition-all hover:bg-white/15 active:scale-95"
+                        className="h-9 rounded-full border border-white/10 bg-white/10 px-3 text-xs font-semibold text-white outline-none transition-all hover:bg-white/15 active:scale-95"
                         aria-label="Playback speed"
                       >
                         {speedOptions.map((speed) => (
@@ -551,7 +545,7 @@ export default function CourseLearning({ setView }: Props) {
                       </select>
                       <button
                         onClick={toggleFullscreen}
-                        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white/20 active:scale-95"
+                        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-white transition-all hover:bg-white/20 active:scale-95"
                         aria-label="Toggle fullscreen"
                       >
                         <Maximize size={19} />
@@ -562,24 +556,50 @@ export default function CourseLearning({ setView }: Props) {
               </div>
             </section>
 
-            <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-600">Now Playing</p>
-              <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+            <section className="rounded-2xl bg-white/80 p-6 shadow-sm ring-1 ring-slate-200/60">
+              <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <h2 className="text-2xl font-bold tracking-tight text-slate-900">{currentLesson.title}</h2>
-                  <p className="mt-1 text-sm text-slate-500">
+                  <p className="text-xs font-medium uppercase tracking-[0.18em] text-indigo-600">Now Playing</p>
+                  <h2 className="mt-2 text-3xl font-bold tracking-tight text-slate-950">{currentLesson.title}</h2>
+                  <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
                     Premium React architecture course with chapter-level seeking and personal notes.
                   </p>
                 </div>
-                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-semibold text-slate-600">
+                <span className="rounded-full bg-slate-100 px-3 py-1.5 text-sm font-medium text-slate-500">
                   {currentLesson.durationLabel}
                 </span>
+              </div>
+
+              <div className="mt-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <h3 className="text-sm font-semibold text-slate-900">Chapter timeline</h3>
+                  <span className="text-xs font-medium text-slate-400">Click a marker to seek</span>
+                </div>
+                <div className="flex gap-3 overflow-x-auto pb-1">
+                  {currentLesson.timestamps.map((timestamp) => {
+                    const isPast = currentSeconds >= timestamp.time;
+                    return (
+                      <button
+                        key={`${currentLesson.id}-${timestamp.time}`}
+                        onClick={() => handleLessonSelect(currentLesson, timestamp.time)}
+                        className={`group min-w-fit rounded-full px-4 py-2 text-left transition-all active:scale-95 ${
+                          isPast
+                            ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-600/20'
+                            : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
+                        }`}
+                      >
+                        <span className="mr-2 text-xs font-semibold tabular-nums opacity-80">@{formatTime(timestamp.time)}</span>
+                        <span className="text-sm font-medium">{timestamp.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </section>
           </main>
 
-          <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="grid grid-cols-3 border-b border-slate-200">
+          <aside className="flex min-h-[540px] flex-col overflow-hidden rounded-2xl bg-white/90 shadow-sm ring-1 ring-slate-200/60">
+            <div className="grid grid-cols-3 bg-slate-50/70 p-1">
               {[
                 { id: 'notes' as const, label: 'Notes', icon: FileText },
                 { id: 'discuss' as const, label: 'Discuss', icon: MessageSquare },
@@ -590,53 +610,56 @@ export default function CourseLearning({ setView }: Props) {
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`relative flex flex-col items-center gap-1 px-3 py-4 text-xs font-bold uppercase tracking-[0.12em] transition-all active:scale-95 ${
-                      activeTab === tab.id ? 'text-indigo-700' : 'text-slate-400 hover:bg-slate-50 hover:text-slate-700'
+                    className={`relative flex flex-col items-center gap-1 rounded-xl px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition-all active:scale-95 ${
+                      activeTab === tab.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-slate-400 hover:text-slate-700'
                     }`}
                   >
                     <Icon size={18} />
                     {tab.label}
-                    {activeTab === tab.id && <span className="absolute inset-x-6 bottom-0 h-0.5 rounded-full bg-indigo-600" />}
                   </button>
                 );
               })}
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-slate-50/60 p-4">
+            <div className="flex-1 overflow-y-auto p-5">
               {activeTab === 'notes' && (
                 <div className="flex h-full flex-col">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold tracking-tight text-slate-900">Smart Notes</h2>
+                    <p className="mt-1 text-sm leading-6 text-slate-500">Capture timestamped ideas and jump back instantly.</p>
+                  </div>
                   <div className="flex-1 space-y-3 overflow-y-auto pr-1">
                     {notes.length === 0 ? (
-                      <div className="rounded-2xl border border-dashed border-slate-200 bg-white p-6 text-center">
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 p-6 text-center">
                         <FileText className="mx-auto text-slate-300" size={32} />
-                        <p className="mt-3 text-sm font-semibold text-slate-700">No notes yet</p>
+                        <p className="mt-3 text-sm font-medium text-slate-700">No notes yet</p>
                         <p className="mt-1 text-xs text-slate-500">Capture ideas at the exact frame you are watching.</p>
                       </div>
                     ) : (
                       notes.map((note) => (
-                        <article key={note.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                        <article key={note.id} className="rounded-xl bg-slate-50 p-4 transition-all hover:bg-indigo-50/60">
                           <button
                             onClick={() => seekTo(note.time)}
-                            className="text-sm font-bold text-indigo-600 transition-all hover:text-indigo-800 active:scale-95"
+                            className="rounded-full bg-white px-2.5 py-1 text-xs font-semibold text-indigo-600 shadow-sm ring-1 ring-indigo-100 transition-all hover:text-indigo-800 active:scale-95"
                           >
                             {note.timestamp}
                           </button>
-                          <p className="mt-2 text-sm leading-6 text-slate-700">{note.text}</p>
+                          <p className="mt-3 text-sm leading-6 text-slate-700">{note.text}</p>
                         </article>
                       ))
                     )}
                   </div>
 
-                  <div className="mt-4 border-t border-slate-200 pt-4">
+                  <div className="mt-5 rounded-xl bg-slate-50 p-3 ring-1 ring-slate-200/70">
                     <textarea
                       value={noteText}
                       onChange={(event) => setNoteText(event.target.value)}
                       placeholder={`Take a note at ${formatTime(currentSeconds)}...`}
-                      className="h-28 w-full resize-none rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                      className="h-24 w-full resize-none rounded-lg border-0 bg-white p-3 text-sm text-slate-900 outline-none ring-1 ring-slate-200 transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-200"
                     />
                     <button
                       onClick={saveNote}
-                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3 text-sm font-bold text-white shadow-sm shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="mt-2 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 px-4 py-3 text-sm font-semibold text-white shadow-sm shadow-indigo-600/20 transition-all hover:bg-indigo-700 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                       disabled={!noteText.trim()}
                     >
                       <Send size={16} />
@@ -648,13 +671,13 @@ export default function CourseLearning({ setView }: Props) {
 
               {activeTab === 'discuss' && (
                 <div className="flex h-full flex-col">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="rounded-xl bg-slate-50 p-4">
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-indigo-50 text-indigo-600">
                         <MessageSquare size={19} />
                       </div>
                       <div>
-                        <h3 className="font-bold text-slate-900">Lesson Discussion</h3>
+                        <h3 className="font-semibold text-slate-900">Lesson Discussion</h3>
                         <p className="mt-1 text-sm leading-6 text-slate-500">
                           Ask a question, compare notes, and follow mentor replies for this lesson.
                         </p>
@@ -664,8 +687,8 @@ export default function CourseLearning({ setView }: Props) {
 
                   <div className="mt-3 space-y-3">
                     {['How do you decide whether logic belongs in an effect or an event handler?', 'Can cleanup functions also cancel async requests?'].map((question, index) => (
-                      <div key={question} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                        <p className="text-sm font-semibold leading-6 text-slate-800">{question}</p>
+                      <div key={question} className="rounded-xl bg-slate-50 p-4">
+                        <p className="text-sm font-medium leading-6 text-slate-800">{question}</p>
                         <p className="mt-2 text-xs font-medium text-slate-400">{index + 4} replies</p>
                       </div>
                     ))}
@@ -683,14 +706,14 @@ export default function CourseLearning({ setView }: Props) {
                     <a
                       key={file.name}
                       href="#"
-                      className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all hover:border-indigo-200 hover:shadow-md active:scale-95"
+                      className="flex items-center justify-between rounded-xl bg-slate-50 p-4 transition-all hover:bg-indigo-50/60 active:scale-95"
                     >
                       <span className="flex min-w-0 items-center gap-3">
                         <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${file.color}`}>
                           <FileText size={18} />
                         </span>
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-bold text-slate-800">{file.name}</span>
+                          <span className="block truncate text-sm font-medium text-slate-800">{file.name}</span>
                           <span className="text-xs font-medium text-slate-400">{file.meta}</span>
                         </span>
                       </span>
