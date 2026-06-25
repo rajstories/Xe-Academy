@@ -20,6 +20,7 @@ import { getUserDisplayName } from '../lib/auth';
 
 interface Props {
   setView: (view: View) => void;
+  onNotificationsClick?: () => void;
 }
 
 type CourseProgress = {
@@ -99,7 +100,7 @@ function formatMonth(year: number, month: number) {
   return new Intl.DateTimeFormat('en', { month: 'long', year: 'numeric' }).format(new Date(year, month, 1));
 }
 
-export default function StudentDashboard({ setView }: Props) {
+export default function StudentDashboard({ setView, onNotificationsClick }: Props) {
   const { user } = useUser();
   const firstName = getUserDisplayName(user || undefined);
   const currentRuntimeDate = new Date(2026, 5, 25);
@@ -140,7 +141,7 @@ export default function StudentDashboard({ setView }: Props) {
             </div>
             <div className="flex flex-col gap-3 sm:flex-row">
               <button
-                onClick={() => setNotificationsOpen(true)}
+                onClick={onNotificationsClick || (() => setNotificationsOpen(true))}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-white/10 px-4 py-3 text-sm font-semibold text-white ring-1 ring-white/10 transition-all hover:bg-white/15 active:scale-[0.98]"
               >
                 <Bell size={17} />

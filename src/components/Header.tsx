@@ -9,9 +9,11 @@ interface HeaderProps {
   role: Role;
   setRole: (role: Role) => void;
   activeView: View;
+  unreadCount?: number;
+  onNotificationsClick?: () => void;
 }
 
-export default function Header({ role, setRole, activeView }: HeaderProps) {
+export default function Header({ role, setRole, activeView, unreadCount, onNotificationsClick }: HeaderProps) {
   const { signOut } = useClerk();
   const { user } = useUser();
   const firstName = getUserDisplayName(user || undefined);
@@ -77,9 +79,17 @@ export default function Header({ role, setRole, activeView }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-4">
-        <button className="relative w-10 h-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors">
+        <button
+          onClick={onNotificationsClick}
+          className="relative w-10 h-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors"
+        >
           <Bell size={20} className="text-text-primary" />
-          <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-danger border-2 border-background"></span>
+          {unreadCount !== undefined && unreadCount > 0 ? (
+            <span className="absolute top-2.5 right-2.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-danger opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-danger border-2 border-background"></span>
+            </span>
+          ) : null}
         </button>
 
         <div className="relative group">
