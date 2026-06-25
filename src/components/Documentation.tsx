@@ -19,9 +19,13 @@ import {
   ThumbsUp,
   ThumbsDown,
   Clock,
+  Terminal,
+  ArrowRight,
+  Copy,
+  Check,
 } from 'lucide-react';
 
-type SectionId = 'getting-started' | 'courses-lessons' | 'live-sessions' | 'for-creators' | 'account-billing' | 'troubleshooting';
+type SectionId = 'getting-started' | 'courses-lessons' | 'live-sessions' | 'for-creators' | 'account-billing' | 'developer-api' | 'troubleshooting';
 
 interface DocSection {
   id: SectionId;
@@ -35,6 +39,7 @@ interface ArticleBlock {
   paragraphs: string[];
   list?: { items: string[]; ordered?: boolean };
   callout?: { variant: 'note' | 'tip'; text: string };
+  code?: { language: string; filename?: string; snippet: string };
 }
 
 interface Article {
@@ -45,6 +50,7 @@ interface Article {
   readTime: string;
   intro: string;
   blocks: ArticleBlock[];
+  isNew?: boolean;
 }
 
 const DOC_SECTIONS: DocSection[] = [
@@ -53,6 +59,7 @@ const DOC_SECTIONS: DocSection[] = [
   { id: 'live-sessions', label: 'Live Sessions', description: 'Join live classes and find replays afterwards.', icon: Video },
   { id: 'for-creators', label: 'For Creators', description: 'Build, publish, and grow your courses.', icon: Sparkles },
   { id: 'account-billing', label: 'Account & Billing', description: 'Manage your plan, payments, and refunds.', icon: CreditCard },
+  { id: 'developer-api', label: 'Developer API', description: 'Integrate the catalog and subscribe to event webhooks.', icon: Terminal },
   { id: 'troubleshooting', label: 'Troubleshooting', description: 'Fix common errors and check requirements.', icon: LifeBuoy },
 ];
 
@@ -116,6 +123,88 @@ const ARTICLES: Article[] = [
       {
         heading: 'The header',
         paragraphs: ['The top bar shows the title of whatever you are viewing along with a short subtitle, plus notifications and your profile menu on the right. Click your profile badge to sign out or switch roles if you have access to more than one portal.'],
+      },
+    ],
+  },
+  {
+    slug: 'webhooks-integration',
+    sectionId: 'developer-api',
+    title: 'Webhooks Integration',
+    lastUpdated: 'June 25, 2026',
+    readTime: '3 min read',
+    isNew: true,
+    intro: 'Configure event webhooks to receive real-time JSON notifications when activities occur within your XE Academy workspace.',
+    blocks: [
+      {
+        heading: 'Webhook events setup',
+        paragraphs: [
+          'Webhooks allow you to listen for workspace triggers like student enrollment, live class starts, or course builders publishing content. Set up your webhook URL in Platform Settings to receive secure HTTP POST payloads.',
+        ],
+      },
+      {
+        heading: 'Webhook JSON payload format',
+        paragraphs: [
+          'Webhook events are formatted in standardized JSON containing the event identifier and resource details:',
+        ],
+        code: {
+          language: 'json',
+          filename: 'enrollment-webhook.json',
+          snippet: `{
+  "event": "student.course.enrolled",
+  "timestamp": "2026-06-25T16:00:00Z",
+  "data": {
+    "student_id": "usr_91238xa",
+    "course_id": "course_react_19_advanced",
+    "tier": "Student Pro",
+    "referred_by": "marketing_campaign_q2"
+  }
+}`,
+        },
+      },
+      {
+        heading: 'HMAC signature verification',
+        paragraphs: [
+          'To ensure incoming webhooks originate securely from XE Academy, verify the SHA-256 HMAC signature passed in the `x-xe-signature` header using your webhook signing secret.',
+        ],
+      },
+    ],
+  },
+  {
+    slug: 'course-catalog-api',
+    sectionId: 'developer-api',
+    title: 'Course Catalog API',
+    lastUpdated: 'June 24, 2026',
+    readTime: '2 min read',
+    isNew: true,
+    intro: 'Integrate and query the active XE Academy course catalog directly from your external landing pages.',
+    blocks: [
+      {
+        heading: 'Retrieve course listings',
+        paragraphs: [
+          'You can fetch the list of premium active courses using our REST API endpoint. Filter resources by category, rating, or creator details.',
+        ],
+      },
+      {
+        heading: 'Fetch query snippet',
+        paragraphs: ['Here is an example using native javascript fetch to retrieve catalog items:'],
+        code: {
+          language: 'javascript',
+          filename: 'catalog-fetch.js',
+          snippet: `// Fetch catalog listing
+const fetchCatalog = async () => {
+  const url = 'https://api.xeacademy.com/v1/courses?status=published';
+  const response = await fetch(url, {
+    headers: {
+      'Authorization': 'Bearer YOUR_API_TOKEN',
+      'Content-Type': 'application/json'
+    }
+  });
+  const data = await response.json();
+  return data.courses;
+};
+
+fetchCatalog().then(courses => console.log('Loaded:', courses.length));`,
+        },
       },
     ],
   },
@@ -418,6 +507,43 @@ function CalloutBox({ variant, text }: { variant: 'note' | 'tip'; text: string }
   );
 }
 
+function CodeBlock({ language, filename, snippet }: { language: string; filename?: string; snippet: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(snippet);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="my-5 overflow-hidden rounded-2xl border border-slate-800 bg-[#0F172A] font-mono text-xs text-slate-200 shadow-md">
+      <div className="flex items-center justify-between bg-slate-900 px-4 py-2.5 border-b border-slate-800 text-[10px] uppercase font-bold text-slate-400">
+        <span>{filename || language}</span>
+        <button
+          onClick={handleCopy}
+          className="flex items-center gap-1 hover:text-white transition-colors"
+        >
+          {copied ? (
+            <>
+              <Check size={12} className="text-green-400" />
+              <span className="text-green-400">Copied</span>
+            </>
+          ) : (
+            <>
+              <Copy size={12} />
+              <span>Copy</span>
+            </>
+          )}
+        </button>
+      </div>
+      <pre className="p-4 overflow-x-auto leading-relaxed text-slate-300">
+        <code>{snippet}</code>
+      </pre>
+    </div>
+  );
+}
+
 function NavTree({
   query,
   activeSlug,
@@ -468,7 +594,12 @@ function NavTree({
                           : 'border-transparent text-slate-600 hover:border-slate-200 hover:bg-slate-50 hover:text-slate-900'
                       }`}
                     >
-                      {article.title}
+                      <div className="flex items-center justify-between gap-1">
+                        <span>{article.title}</span>
+                        {article.isNew && (
+                          <span className="text-[9px] bg-primary/10 text-primary font-bold px-1.5 py-0.5 rounded">NEW</span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -493,8 +624,13 @@ function ArticleView({ article, onSelectArticle }: { article: Article; onSelectA
   }, [article.slug]);
 
   return (
-    <article className="pb-16">
-      <p className="text-xs font-bold uppercase tracking-widest text-indigo-600">{DOC_SECTIONS.find((s) => s.id === article.sectionId)?.label}</p>
+    <article className="pb-8">
+      <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-indigo-600">
+        <span>{DOC_SECTIONS.find((s) => s.id === article.sectionId)?.label}</span>
+        {article.isNew && (
+          <span className="bg-indigo-600 text-white rounded px-2 py-0.5 text-[9px] tracking-normal font-black">NEW SPEC</span>
+        )}
+      </div>
       <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">{article.title}</h1>
       <div className="mt-4 flex items-center gap-4 text-xs font-medium text-slate-400">
         <span>Last updated {article.lastUpdated}</span>
@@ -521,6 +657,13 @@ function ArticleView({ article, onSelectArticle }: { article: Article; onSelectA
                     {block.list.items.map((item) => <li key={item}>{item}</li>)}
                   </ul>
                 )
+              )}
+              {block.code && (
+                <CodeBlock
+                  language={block.code.language}
+                  filename={block.code.filename}
+                  snippet={block.code.snippet}
+                />
               )}
               {block.callout && <CalloutBox variant={block.callout.variant} text={block.callout.text} />}
             </div>
@@ -600,26 +743,29 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
   const matches = normalizedQuery ? ARTICLES.filter((article) => article.title.toLowerCase().includes(normalizedQuery)) : [];
 
   return (
-    <div className="py-6">
-      <div className="text-center">
-        <h1 className="text-3xl font-extrabold tracking-tight text-slate-950 sm:text-4xl">How can we help?</h1>
-        <p className="mx-auto mt-3 max-w-md text-base leading-7 text-slate-500">Everything you need to know about using XE Academy, organized by topic.</p>
+    <div className="space-y-12">
+      {/* Search Header Area */}
+      <div className="text-center py-4">
+        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-950 leading-tight">How can we help?</h1>
+        <p className="mx-auto mt-3 max-w-lg text-sm md:text-base leading-relaxed text-slate-500">
+          Everything you need to know about integrating and using XE Academy, organized by topic.
+        </p>
 
-        <div className="relative mx-auto mt-7 max-w-lg">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+        <div className="relative mx-auto mt-8 max-w-xl">
+          <Search size={20} className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search docs..."
-            className="w-full rounded-full border border-slate-200 bg-white py-3.5 pl-11 pr-5 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
+            placeholder="Search documentation, API guides, release notes..."
+            className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-13 pr-6 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
           />
           {matches.length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-2 text-left shadow-xl shadow-slate-900/10">
+            <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-2 text-left shadow-xl shadow-slate-900/10">
               {matches.map((article) => (
                 <button
                   key={article.slug}
                   onClick={() => onSelectArticle(article.slug)}
-                  className="flex w-full flex-col rounded-xl px-3.5 py-2.5 text-left hover:bg-slate-50"
+                  className="flex w-full flex-col rounded-xl px-4 py-2.5 text-left hover:bg-slate-50"
                 >
                   <span className="text-sm font-semibold text-slate-800">{article.title}</span>
                   <span className="text-xs text-slate-400">{DOC_SECTIONS.find((s) => s.id === article.sectionId)?.label}</span>
@@ -630,25 +776,59 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
         </div>
       </div>
 
-      <div className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {DOC_SECTIONS.map((section) => {
-          const Icon = section.icon;
-          const count = ARTICLES.filter((a) => a.sectionId === section.id).length;
-          return (
-            <button
-              key={section.id}
-              onClick={() => onSelectSection(section.id)}
-              className="group flex flex-col items-start rounded-3xl border border-slate-200 bg-white p-6 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/10"
-            >
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                <Icon size={20} />
-              </div>
-              <h3 className="mt-4 font-bold text-slate-950">{section.label}</h3>
-              <p className="mt-1.5 text-sm leading-6 text-slate-500">{section.description}</p>
-              <span className="mt-4 text-xs font-bold uppercase tracking-wide text-slate-400">{count} articles</span>
-            </button>
-          );
-        })}
+      {/* Featured Product Launch Card */}
+      <div className="bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-white border border-indigo-500/20 rounded-3xl p-8 relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(108,92,231,0.05)] transition-all duration-300">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle_at_top_right,rgba(108,92,231,0.1),transparent)] pointer-events-none" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600/10 px-3 py-1 text-xs font-bold text-indigo-700 mb-4">
+          <Sparkles size={12} className="animate-pulse" />
+          RELEASE SPECIFICATION
+        </span>
+        <h3 className="text-2xl font-black text-slate-950 tracking-tight leading-tight">
+          XE Academy v2.0 Platform Launch
+        </h3>
+        <p className="mt-2 text-sm text-slate-500 max-w-2xl leading-relaxed">
+          Learn about our new cohort-based learning model, interactive live arenas, developer catalog API integrations, and webhook systems. Read the comprehensive specifications and launch guides.
+        </p>
+        <div className="mt-6 flex flex-wrap gap-3">
+          <button
+            onClick={() => onSelectArticle('webhooks-integration')}
+            className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-1.5 active:scale-[0.98]"
+          >
+            <span>Explore Developer APIs</span>
+            <ArrowRight size={14} />
+          </button>
+          <button
+            onClick={() => onSelectSection('getting-started')}
+            className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all active:scale-[0.98]"
+          >
+            View Quickstart Guides
+          </button>
+        </div>
+      </div>
+
+      {/* Grid of Categories */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-bold text-slate-950 tracking-tight">Documentation Topics</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          {DOC_SECTIONS.map((section) => {
+            const Icon = section.icon;
+            const count = ARTICLES.filter((a) => a.sectionId === section.id).length;
+            return (
+              <button
+                key={section.id}
+                onClick={() => onSelectSection(section.id)}
+                className="group flex flex-col items-start rounded-3xl border border-slate-200/60 bg-white p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5"
+              >
+                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                  <Icon size={20} />
+                </div>
+                <h4 className="mt-4 font-bold text-slate-950 group-hover:text-indigo-600 transition-colors">{section.label}</h4>
+                <p className="mt-1.5 text-xs md:text-sm leading-relaxed text-slate-500">{section.description}</p>
+                <span className="mt-5 text-[10px] font-bold uppercase tracking-wider text-slate-400">{count} articles</span>
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -717,62 +897,70 @@ export default function Documentation() {
   }, [activeArticle]);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-border/50 bg-white shadow-sm">
-      {/* Sticky page header */}
-      <div className="flex flex-shrink-0 flex-wrap items-center justify-between gap-4 border-b border-slate-100 bg-white/95 px-5 py-4 backdrop-blur md:px-8">
+    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 max-w-7xl mx-auto w-full animate-in fade-in duration-500 items-start">
+      {/* Desktop Left Sidebar Panel */}
+      <aside className="hidden lg:block bg-white border border-border/50 rounded-2xl p-5 shadow-sm sticky top-6 max-h-[calc(100vh-140px)] overflow-y-auto">
+        <div className="mb-4 text-xs font-black text-slate-400 uppercase tracking-widest">Documentation</div>
+        <NavTree query={query} activeSlug={activeSlug} expanded={expanded} onToggleSection={toggleSection} onSelectArticle={selectArticle} />
+      </aside>
+
+      {/* Mobile Sticky Mini Header bar */}
+      <div className="flex items-center justify-between bg-white border border-border/50 rounded-xl px-4 py-3 shadow-sm lg:hidden w-full col-span-1">
         <div className="flex items-center gap-3">
-          <button onClick={() => setMobileNavOpen(true)} className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-slate-50 md:hidden">
+          <button onClick={() => setMobileNavOpen(true)} className="grid h-9 w-9 place-items-center rounded-xl text-slate-500 hover:bg-slate-50">
             <Menu size={20} />
           </button>
-          <h1 className="text-xl font-bold tracking-tight text-slate-950">Documentation</h1>
+          <span className="text-sm font-bold text-slate-900">Docs Navigation</span>
         </div>
-        <div className="relative w-full max-w-xs sm:w-72">
-          <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search docs..."
-            className="w-full rounded-full border border-slate-200 bg-slate-50 py-2.5 pl-9 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-500/10"
-          />
-        </div>
+        {activeSlug && (
+          <button
+            onClick={() => setActiveSlug(null)}
+            className="text-xs font-semibold text-primary"
+          >
+            Back to Home
+          </button>
+        )}
       </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Desktop left nav */}
-        <aside className="hidden w-64 flex-shrink-0 overflow-y-auto border-r border-slate-100 px-4 py-6 md:block lg:w-72">
-          <NavTree query={query} activeSlug={activeSlug} expanded={expanded} onToggleSection={toggleSection} onSelectArticle={selectArticle} />
-        </aside>
-
-        {/* Mobile nav drawer */}
-        {mobileNavOpen && (
-          <div className="fixed inset-0 z-30 md:hidden">
-            <div className="absolute inset-0 bg-slate-900/40" onClick={() => setMobileNavOpen(false)} />
-            <div className="absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-white p-4 shadow-2xl">
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm font-bold text-slate-900">Documentation</p>
-                <button onClick={() => setMobileNavOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-50">
-                  <X size={18} />
-                </button>
-              </div>
-              <NavTree query={query} activeSlug={activeSlug} expanded={expanded} onToggleSection={toggleSection} onSelectArticle={selectArticle} />
+      {/* Mobile Navigation Drawer */}
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-[100] lg:hidden">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-xs" onClick={() => setMobileNavOpen(false)} />
+          <div className="absolute left-0 top-0 h-full w-80 max-w-[85%] overflow-y-auto bg-white p-5 shadow-2xl flex flex-col gap-4">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <span className="text-sm font-black text-slate-900 uppercase tracking-wider">Navigation</span>
+              <button onClick={() => setMobileNavOpen(false)} className="grid h-8 w-8 place-items-center rounded-lg text-slate-500 hover:bg-slate-50">
+                <X size={18} />
+              </button>
             </div>
-          </div>
-        )}
-
-        {/* Main content */}
-        <div ref={contentRef} className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-3xl px-5 py-8 md:px-10">
-            {activeArticle ? (
-              <ArticleView article={activeArticle} onSelectArticle={selectArticle} />
-            ) : (
-              <DocsHome query={query} setQuery={setQuery} onSelectSection={selectSection} onSelectArticle={selectArticle} />
-            )}
+            <NavTree query={query} activeSlug={activeSlug} expanded={expanded} onToggleSection={toggleSection} onSelectArticle={selectArticle} />
           </div>
         </div>
+      )}
 
-        {/* Right TOC */}
+      {/* Main Content Area Container */}
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_240px] gap-6 items-start">
+        {/* Main Content Card */}
+        <div ref={contentRef} className="bg-white border border-border/50 rounded-2xl p-6 md:p-10 shadow-sm relative min-h-[600px] w-full">
+          {/* Breadcrumb path */}
+          {activeSlug && (
+            <div className="mb-6 flex items-center gap-2 text-xs font-medium text-slate-400">
+              <button onClick={() => setActiveSlug(null)} className="hover:text-primary transition-colors">Documentation</button>
+              <ChevronRight size={12} />
+              <span className="text-slate-600 font-semibold">{activeArticle?.title}</span>
+            </div>
+          )}
+
+          {activeArticle ? (
+            <ArticleView article={activeArticle} onSelectArticle={selectArticle} />
+          ) : (
+            <DocsHome query={query} setQuery={setQuery} onSelectSection={selectSection} onSelectArticle={selectArticle} />
+          )}
+        </div>
+
+        {/* Right Table of Contents (Desktop Sticky) */}
         {activeArticle && (
-          <aside className="hidden w-64 flex-shrink-0 overflow-y-auto border-l border-slate-100 px-6 py-8 lg:block">
+          <aside className="hidden xl:block bg-white border border-border/50 rounded-2xl p-5 shadow-sm sticky top-6 max-h-[calc(100vh-140px)] overflow-y-auto">
             <TableOfContents article={activeArticle} activeHeading={activeHeading} />
           </aside>
         )}
