@@ -56,7 +56,7 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
   const openResource = (id: string) => {
     if (id === 'documentation') {
       window.history.pushState({}, '', '/documentation');
-      window.dispatchEvent(new PopStateEvent('popstate'));
+      window.dispatchEvent(new Event('popstate'));
       return;
     }
     setActiveView(id as View);

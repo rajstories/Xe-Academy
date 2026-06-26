@@ -738,6 +738,37 @@ function TableOfContents({ article, activeHeading }: { article: Article; activeH
   );
 }
 
+function DocsHomeAside({ onSelectSection, onSelectArticle }: { onSelectSection: (id: SectionId) => void; onSelectArticle: (slug: string) => void }) {
+  return (
+    <div className="sticky top-6">
+      <p className="text-sm font-bold text-slate-400">Start here</p>
+      <div className="mt-4 space-y-3">
+        <button onClick={() => onSelectArticle('creating-an-account')} className="block text-left text-sm font-semibold text-slate-600 transition-colors hover:text-indigo-600">
+          What you can do with XE Academy
+        </button>
+        <button onClick={() => onSelectSection('courses-lessons')} className="block text-left text-sm font-semibold text-slate-600 transition-colors hover:text-indigo-600">
+          Courses and lessons
+        </button>
+        <button onClick={() => onSelectSection('for-creators')} className="block text-left text-sm font-semibold text-slate-600 transition-colors hover:text-indigo-600">
+          Creator resources
+        </button>
+        <button onClick={() => onSelectSection('developer-api')} className="block text-left text-sm font-semibold text-slate-600 transition-colors hover:text-indigo-600">
+          Developer API
+        </button>
+      </div>
+
+      <div className="mt-7 space-y-3 border-t border-slate-200 pt-6">
+        <button className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900">
+          <Copy size={15} /> Copy page
+        </button>
+        <button onClick={() => onSelectSection('troubleshooting')} className="flex items-center gap-2 text-sm font-semibold text-slate-500 hover:text-slate-900">
+          <LifeBuoy size={15} /> Get help
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query: string; setQuery: (value: string) => void; onSelectSection: (id: SectionId) => void; onSelectArticle: (slug: string) => void }) {
   const normalizedQuery = query.trim().toLowerCase();
   const matches = normalizedQuery ? ARTICLES.filter((article) => article.title.toLowerCase().includes(normalizedQuery)) : [];
@@ -749,139 +780,125 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
   const suggestions = ['Creating an account', 'Webhooks', 'Refunds', 'Live sessions'];
 
   return (
-    <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-2xl bg-slate-950 px-6 py-7 text-white shadow-xl shadow-slate-900/10">
-        <div className="pointer-events-none absolute inset-0 opacity-[0.11] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:32px_32px]" />
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-1/2 bg-gradient-to-br from-indigo-500/40 via-violet-500/30 to-transparent" />
-        <div className="relative grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-end">
-          <div>
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-indigo-100 ring-1 ring-white/15">
-              <Sparkles size={12} /> XE Academy Docs
-            </span>
-            <h1 className="mt-4 max-w-3xl text-3xl font-extrabold leading-[1.05] tracking-tight sm:text-4xl">
-              Build, learn, and troubleshoot faster.
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              Search {totalArticles} focused guides across {DOC_SECTIONS.length} product areas, from student onboarding to creator workflows and API integration.
-            </p>
-            <div className="relative mt-5 max-w-3xl">
-              <Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search docs, API guides, billing, live sessions..."
-                className="h-[52px] w-full rounded-xl border border-white/10 bg-white py-3.5 pl-11 pr-5 text-sm font-medium text-slate-900 shadow-2xl shadow-slate-950/20 outline-none transition-all placeholder:text-slate-400 focus:ring-4 focus:ring-indigo-400/25"
-              />
-              {matches.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-100 bg-white p-2 text-left shadow-2xl shadow-slate-900/20">
-                  {matches.map((article) => (
-                    <button
-                      key={article.slug}
-                      onClick={() => onSelectArticle(article.slug)}
-                      className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-slate-50"
-                    >
-                      <span className="flex min-w-0 flex-col">
-                        <span className="truncate text-sm font-semibold text-slate-800">{article.title}</span>
-                        <span className="text-xs text-slate-400">{DOC_SECTIONS.find((s) => s.id === article.sectionId)?.label}</span>
-                      </span>
-                      <ArrowRight size={15} className="text-slate-300" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <span className="text-xs font-medium text-slate-400">Popular:</span>
-              {suggestions.map((term) => (
-                <button
-                  key={term}
-                  onClick={() => setQuery(term)}
-                  className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/10 transition-colors hover:bg-white/15"
-                >
-                  {term}
-                </button>
-              ))}
-            </div>
-          </div>
+    <div className="max-w-4xl space-y-10">
+      <section>
+        <p className="text-sm font-semibold text-slate-400">Get Started</p>
+        <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-slate-950 md:text-5xl">XE Academy Documentation</h1>
+        <p className="mt-6 max-w-3xl text-lg leading-8 text-slate-600">
+          XE Academy helps students learn, creators publish, and teams manage education workflows. Use these guides to understand the platform, connect tools, and move faster.
+        </p>
 
-          <div className="grid grid-cols-3 gap-2 xl:grid-cols-1">
-            {[
-              [String(totalArticles), 'Articles'],
-              [String(DOC_SECTIONS.length), 'Topics'],
-              ['24h', 'Support'],
-            ].map(([value, label]) => (
-              <div key={label} className="rounded-xl border border-white/10 bg-white/[0.07] px-4 py-3 backdrop-blur-sm">
-                <p className="text-lg font-extrabold tracking-tight text-white">{value}</p>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">{label}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <section className="grid gap-4 xl:grid-cols-[minmax(0,0.95fr)_minmax(0,1.35fr)]">
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-extrabold tracking-tight text-slate-950">Popular articles</h2>
-            <button onClick={() => onSelectSection('getting-started')} className="inline-flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700">
-              Start here <ArrowRight size={13} />
-            </button>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {popular.map((article) => {
-              const section = DOC_SECTIONS.find((s) => s.id === article.sectionId);
-              const Icon = section?.icon ?? BookOpen;
-              return (
+        <div className="relative mt-7 max-w-2xl">
+          <Search size={19} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search documentation..."
+            className="h-[52px] w-full rounded-xl border border-slate-200 bg-white py-3.5 pl-11 pr-5 text-sm font-medium text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-500/10"
+          />
+          {matches.length > 0 && (
+            <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-xl border border-slate-100 bg-white p-2 text-left shadow-2xl shadow-slate-900/12">
+              {matches.map((article) => (
                 <button
                   key={article.slug}
                   onClick={() => onSelectArticle(article.slug)}
-                  className="group flex w-full items-center gap-3 py-3 text-left transition-colors first:pt-0 last:pb-0"
+                  className="flex w-full items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-slate-50"
                 >
-                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
-                    <Icon size={17} />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="truncate text-sm font-semibold text-slate-800">{article.title}</span>
+                    <span className="text-xs text-slate-400">{DOC_SECTIONS.find((s) => s.id === article.sectionId)?.label}</span>
                   </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold text-slate-900 group-hover:text-indigo-600">{article.title}</span>
-                    <span className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400"><Clock size={12} /> {article.readTime}</span>
-                  </span>
-                  <ArrowRight size={15} className="text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+                  <ArrowRight size={15} className="text-slate-300" />
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
+      </section>
 
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-5">
-          <h2 className="mb-4 text-sm font-extrabold tracking-tight text-slate-950">Browse by topic</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 2xl:grid-cols-3">
-            {DOC_SECTIONS.map((section) => {
-              const Icon = section.icon;
-              const count = ARTICLES.filter((a) => a.sectionId === section.id).length;
-              return (
-                <button
-                  key={section.id}
-                  onClick={() => onSelectSection(section.id)}
-                  className="group flex min-h-[112px] items-start gap-3 rounded-xl border border-slate-200/70 bg-white p-4 text-left transition-all duration-300 hover:border-indigo-200 hover:bg-indigo-50/40"
-                >
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-slate-50 text-indigo-600 ring-1 ring-slate-100 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                    <Icon size={18} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-start justify-between gap-2">
-                      <span className="text-sm font-extrabold leading-snug text-slate-950 transition-colors group-hover:text-indigo-700">{section.label}</span>
-                      <ArrowRight size={14} className="mt-0.5 shrink-0 text-slate-300 transition-all group-hover:translate-x-0.5 group-hover:text-indigo-500" />
-                    </span>
-                    <span className="mt-1 block text-xs leading-5 text-slate-500">{section.description}</span>
-                    <span className="mt-2 inline-flex rounded-full bg-slate-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-400">{count} articles</span>
-                  </span>
-                </button>
-              );
-            })}
+      <section className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 shadow-xl shadow-slate-900/10">
+        <div className="grid min-h-[340px] md:grid-cols-[0.9fr_1.1fr]">
+          <div className="relative p-8 text-white">
+            <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:32px_32px]" />
+            <div className="relative">
+              <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-indigo-100 ring-1 ring-white/15">Guides</span>
+              <h2 className="mt-5 text-3xl font-extrabold leading-tight tracking-tight">Build with clarity from day one.</h2>
+              <p className="mt-4 text-sm leading-6 text-slate-300">Start with account setup, then move into courses, live sessions, creator workflows, billing, and developer APIs.</p>
+              <div className="mt-6 flex flex-wrap gap-2">
+                {suggestions.map((term) => (
+                  <button key={term} onClick={() => setQuery(term)} className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/10 hover:bg-white/15">
+                    {term}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="relative hidden bg-gradient-to-br from-indigo-600 via-violet-600 to-indigo-800 p-8 md:block">
+            <div className="absolute inset-0 opacity-[0.14] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:36px_36px]" />
+            <div className="relative ml-auto flex max-w-xs flex-col gap-3">
+              {[[String(totalArticles), 'Articles'], [String(DOC_SECTIONS.length), 'Topics'], ['24h', 'Support']].map(([value, label]) => (
+                <div key={label} className="rounded-xl border border-white/15 bg-white/10 px-5 py-4 text-white shadow-lg shadow-indigo-950/20 backdrop-blur-md">
+                  <p className="text-2xl font-extrabold">{value}</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-100">{label}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-slate-200/70 bg-gradient-to-r from-slate-50 to-indigo-50/50 p-5 sm:flex-row sm:items-center">
+      <section>
+        <div className="mb-4 flex items-center justify-between border-b border-slate-200 pb-3">
+          <h2 className="text-xl font-extrabold tracking-tight text-slate-950">Start here</h2>
+          <button onClick={() => onSelectSection('getting-started')} className="inline-flex items-center gap-1 text-sm font-bold text-indigo-600 hover:text-indigo-700">
+            View all <ArrowRight size={14} />
+          </button>
+        </div>
+        <div className="divide-y divide-slate-100">
+          {popular.map((article) => {
+            const section = DOC_SECTIONS.find((s) => s.id === article.sectionId);
+            const Icon = section?.icon ?? BookOpen;
+            return (
+              <button key={article.slug} onClick={() => onSelectArticle(article.slug)} className="group flex w-full items-center gap-4 py-4 text-left">
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                  <Icon size={18} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-base font-bold text-slate-900 group-hover:text-indigo-600">{article.title}</span>
+                  <span className="mt-1 flex items-center gap-1.5 text-sm text-slate-400"><Clock size={13} /> {article.readTime}</span>
+                </span>
+                <ArrowRight size={16} className="text-slate-300 transition-transform group-hover:translate-x-0.5 group-hover:text-indigo-500" />
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <section>
+        <h2 className="mb-4 border-b border-slate-200 pb-3 text-xl font-extrabold tracking-tight text-slate-950">Browse by topic</h2>
+        <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
+          {DOC_SECTIONS.map((section) => {
+            const Icon = section.icon;
+            const count = ARTICLES.filter((a) => a.sectionId === section.id).length;
+            return (
+              <button key={section.id} onClick={() => onSelectSection(section.id)} className="group flex items-start gap-3 text-left">
+                <span className="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
+                  <Icon size={17} />
+                </span>
+                <span>
+                  <span className="flex items-center gap-2 text-base font-bold text-slate-950 group-hover:text-indigo-600">
+                    {section.label} <ArrowRight size={14} className="text-slate-300 group-hover:text-indigo-500" />
+                  </span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-500">{section.description}</span>
+                  <span className="mt-1 block text-xs font-bold uppercase tracking-wider text-slate-400">{count} articles</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      <div className="flex flex-col items-start justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
           <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-indigo-600 ring-1 ring-slate-200">
             <LifeBuoy size={19} />
@@ -965,10 +982,10 @@ export default function Documentation() {
   }, [activeArticle]);
 
   return (
-    <div className="grid w-full animate-in grid-cols-1 items-start gap-4 fade-in duration-500 lg:grid-cols-[280px_minmax(0,1fr)]">
+    <div className="grid w-full animate-in grid-cols-1 items-start gap-8 fade-in duration-500 lg:grid-cols-[280px_minmax(0,1fr)]">
       {/* Desktop Left Sidebar Panel */}
-      <aside className="sticky top-4 hidden max-h-[calc(100vh-120px)] overflow-y-auto rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm lg:block">
-        <div className="mb-3 text-[11px] font-black uppercase tracking-widest text-slate-400">Documentation</div>
+      <aside className="sticky top-4 hidden max-h-[calc(100vh-120px)] overflow-y-auto border-r border-slate-200 pr-6 lg:block">
+        <div className="mb-4 text-[11px] font-black uppercase tracking-widest text-slate-400">Documentation</div>
         <NavTree query={query} activeSlug={activeSlug} expanded={expanded} onToggleSection={toggleSection} onSelectArticle={selectArticle} />
       </aside>
 
@@ -1007,9 +1024,9 @@ export default function Documentation() {
       )}
 
       {/* Main Content Area Container */}
-      <div className="grid min-w-0 grid-cols-1 items-start gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-10 xl:grid-cols-[minmax(0,1fr)_240px]">
         {/* Main Content Card */}
-        <div ref={contentRef} className="relative min-h-[600px] w-full rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-sm md:p-7">
+        <div ref={contentRef} className="relative min-h-[600px] w-full">
           {/* Breadcrumb path */}
           {activeSlug && (
             <div className="mb-6 flex items-center gap-2 text-xs font-medium text-slate-400">
@@ -1028,8 +1045,13 @@ export default function Documentation() {
 
         {/* Right Table of Contents (Desktop Sticky) */}
         {activeArticle && (
-          <aside className="sticky top-4 hidden max-h-[calc(100vh-120px)] overflow-y-auto rounded-2xl border border-slate-200/70 bg-white p-4 shadow-sm xl:block">
+          <aside className="sticky top-4 hidden max-h-[calc(100vh-120px)] overflow-y-auto border-l border-slate-200 pl-6 xl:block">
             <TableOfContents article={activeArticle} activeHeading={activeHeading} />
+          </aside>
+        )}
+        {!activeArticle && (
+          <aside className="sticky top-4 hidden max-h-[calc(100vh-120px)] overflow-y-auto border-l border-slate-200 pl-6 xl:block">
+            <DocsHomeAside onSelectSection={selectSection} onSelectArticle={selectArticle} />
           </aside>
         )}
       </div>

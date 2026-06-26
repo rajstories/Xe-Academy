@@ -247,6 +247,12 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
+  useEffect(() => {
+    if (currentView !== 'documentation') return;
+    window.history.pushState({}, '', '/documentation');
+    window.dispatchEvent(new Event('popstate'));
+  }, [currentView]);
+
   // Prevent rendering before hydration
   if (!userRole) return null;
 

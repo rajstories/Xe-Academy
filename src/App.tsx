@@ -812,13 +812,6 @@ function DocumentationStandalonePage() {
       </header>
 
       <main className="mx-auto w-full max-w-[1760px] px-5 py-6 sm:px-8 lg:py-8">
-        <div className="mb-7">
-          <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">Developer guides and product manuals</p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">Documentation</h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            Find clear guides for learning workflows, creator tools, live sessions, billing, and developer integrations.
-          </p>
-        </div>
         <Documentation />
       </main>
     </div>
