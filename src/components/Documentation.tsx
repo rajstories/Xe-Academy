@@ -742,74 +742,108 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
   const normalizedQuery = query.trim().toLowerCase();
   const matches = normalizedQuery ? ARTICLES.filter((article) => article.title.toLowerCase().includes(normalizedQuery)) : [];
 
+  const totalArticles = ARTICLES.length;
+  const popular = ['getting-started', 'developer-api', 'for-creators', 'account-billing']
+    .map((id) => ARTICLES.find((article) => article.sectionId === id))
+    .filter((article): article is Article => Boolean(article));
+  const suggestions = ['Creating an account', 'Webhooks', 'Refunds', 'Live sessions'];
+
   return (
-    <div className="space-y-12">
-      {/* Search Header Area */}
-      <div className="text-center py-4">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-950 leading-tight">How can we help?</h1>
-        <p className="mx-auto mt-3 max-w-lg text-sm md:text-base leading-relaxed text-slate-500">
-          Everything you need to know about integrating and using XE Academy, organized by topic.
-        </p>
+    <div className="space-y-10">
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-600 via-violet-600 to-indigo-700 px-7 py-11 sm:px-12 sm:py-14">
+        <div className="pointer-events-none absolute inset-0 opacity-[0.12] [background-image:linear-gradient(to_right,#fff_1px,transparent_1px),linear-gradient(to_bottom,#fff_1px,transparent_1px)] [background-size:40px_40px]" />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-white/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-violet-300/20 blur-3xl" />
 
-        <div className="relative mx-auto mt-8 max-w-xl">
-          <Search size={20} className="absolute left-4.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search documentation, API guides, release notes..."
-            className="w-full rounded-2xl border border-slate-200 bg-white py-4 pl-13 pr-6 text-sm text-slate-900 shadow-sm outline-none transition-all placeholder:text-slate-400 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-500/10"
-          />
-          {matches.length > 0 && (
-            <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-2 text-left shadow-xl shadow-slate-900/10">
-              {matches.map((article) => (
-                <button
-                  key={article.slug}
-                  onClick={() => onSelectArticle(article.slug)}
-                  className="flex w-full flex-col rounded-xl px-4 py-2.5 text-left hover:bg-slate-50"
-                >
-                  <span className="text-sm font-semibold text-slate-800">{article.title}</span>
-                  <span className="text-xs text-slate-400">{DOC_SECTIONS.find((s) => s.id === article.sectionId)?.label}</span>
-                </button>
-              ))}
-            </div>
-          )}
+        <div className="relative">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-white ring-1 ring-white/20">
+            <Sparkles size={12} /> Documentation
+          </span>
+          <h1 className="mt-4 max-w-2xl text-3xl font-extrabold leading-tight tracking-tight text-white sm:text-4xl">
+            Everything you need to build with XE Academy
+          </h1>
+          <p className="mt-3 max-w-xl text-sm leading-relaxed text-indigo-100 sm:text-base">
+            Guides, API references, and manuals — {totalArticles} articles across {DOC_SECTIONS.length} topics, organized so you find answers fast.
+          </p>
+
+          <div className="relative mt-7 max-w-2xl">
+            <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search documentation, API guides, release notes..."
+              className="w-full rounded-2xl border border-white/20 bg-white py-4 pl-12 pr-6 text-sm text-slate-900 shadow-xl shadow-indigo-950/20 outline-none transition-all placeholder:text-slate-400 focus:ring-4 focus:ring-white/30"
+            />
+            {matches.length > 0 && (
+              <div className="absolute left-0 right-0 top-full z-20 mt-2 max-h-72 overflow-y-auto rounded-2xl border border-slate-100 bg-white p-2 text-left shadow-2xl shadow-slate-900/20">
+                {matches.map((article) => (
+                  <button
+                    key={article.slug}
+                    onClick={() => onSelectArticle(article.slug)}
+                    className="flex w-full items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-left hover:bg-slate-50"
+                  >
+                    <span className="flex flex-col">
+                      <span className="text-sm font-semibold text-slate-800">{article.title}</span>
+                      <span className="text-xs text-slate-400">{DOC_SECTIONS.find((s) => s.id === article.sectionId)?.label}</span>
+                    </span>
+                    <ArrowRight size={15} className="text-slate-300" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-indigo-200">Popular:</span>
+            {suggestions.map((term) => (
+              <button
+                key={term}
+                onClick={() => setQuery(term)}
+                className="rounded-full bg-white/10 px-3 py-1 text-xs font-medium text-white ring-1 ring-white/20 transition-colors hover:bg-white/20"
+              >
+                {term}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Featured Product Launch Card */}
-      <div className="bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-white border border-indigo-500/20 rounded-3xl p-8 relative overflow-hidden group hover:shadow-[0_8px_30px_rgb(108,92,231,0.05)] transition-all duration-300">
-        <div className="absolute top-0 right-0 w-64 h-64 bg-[radial-gradient(circle_at_top_right,rgba(108,92,231,0.1),transparent)] pointer-events-none" />
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-600/10 px-3 py-1 text-xs font-bold text-indigo-700 mb-4">
-          <Sparkles size={12} className="animate-pulse" />
-          RELEASE SPECIFICATION
-        </span>
-        <h3 className="text-2xl font-black text-slate-950 tracking-tight leading-tight">
-          XE Academy v2.0 Platform Launch
-        </h3>
-        <p className="mt-2 text-sm text-slate-500 max-w-2xl leading-relaxed">
-          Learn about our new cohort-based learning model, interactive live arenas, developer catalog API integrations, and webhook systems. Read the comprehensive specifications and launch guides.
-        </p>
-        <div className="mt-6 flex flex-wrap gap-3">
-          <button
-            onClick={() => onSelectArticle('webhooks-integration')}
-            className="px-5 py-2.5 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-sm transition-all flex items-center gap-1.5 active:scale-[0.98]"
-          >
-            <span>Explore Developer APIs</span>
-            <ArrowRight size={14} />
-          </button>
-          <button
-            onClick={() => onSelectSection('getting-started')}
-            className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all active:scale-[0.98]"
-          >
-            View Quickstart Guides
+      {/* Quick start / popular articles */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-base font-bold tracking-tight text-slate-950">Popular articles</h2>
+          <button onClick={() => onSelectSection('getting-started')} className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 hover:text-indigo-700">
+            Start from the beginning <ArrowRight size={13} />
           </button>
         </div>
-      </div>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {popular.map((article) => {
+            const section = DOC_SECTIONS.find((s) => s.id === article.sectionId);
+            const Icon = section?.icon ?? BookOpen;
+            return (
+              <button
+                key={article.slug}
+                onClick={() => onSelectArticle(article.slug)}
+                className="group flex items-start gap-3 rounded-2xl border border-slate-200/70 bg-white p-4 text-left transition-all hover:border-indigo-300 hover:shadow-md hover:shadow-indigo-500/5"
+              >
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+                  <Icon size={17} />
+                </span>
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold text-slate-900 group-hover:text-indigo-600">{article.title}</span>
+                  <span className="mt-0.5 flex items-center gap-1.5 text-xs text-slate-400"><Clock size={12} /> {article.readTime}</span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
-      {/* Grid of Categories */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-bold text-slate-950 tracking-tight">Documentation Topics</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+      {/* Browse by category */}
+      <section>
+        <h2 className="mb-4 text-base font-bold tracking-tight text-slate-950">Browse by topic</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {DOC_SECTIONS.map((section) => {
             const Icon = section.icon;
             const count = ARTICLES.filter((a) => a.sectionId === section.id).length;
@@ -817,18 +851,40 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
               <button
                 key={section.id}
                 onClick={() => onSelectSection(section.id)}
-                className="group flex flex-col items-start rounded-3xl border border-slate-200/60 bg-white p-6 text-left shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5"
+                className="group relative flex flex-col items-start overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 text-left transition-all duration-300 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-lg hover:shadow-indigo-500/5"
               >
-                <div className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
-                  <Icon size={20} />
+                <div className="flex w-full items-center justify-between">
+                  <div className="grid h-11 w-11 place-items-center rounded-2xl bg-indigo-50 text-indigo-600 transition-colors group-hover:bg-indigo-600 group-hover:text-white">
+                    <Icon size={20} />
+                  </div>
+                  <ArrowRight size={16} className="text-slate-300 transition-all group-hover:translate-x-0.5 group-hover:text-indigo-500" />
                 </div>
-                <h4 className="mt-4 font-bold text-slate-950 group-hover:text-indigo-600 transition-colors">{section.label}</h4>
-                <p className="mt-1.5 text-xs md:text-sm leading-relaxed text-slate-500">{section.description}</p>
-                <span className="mt-5 text-[10px] font-bold uppercase tracking-wider text-slate-400">{count} articles</span>
+                <h3 className="mt-4 font-bold text-slate-950 transition-colors group-hover:text-indigo-600">{section.label}</h3>
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-500">{section.description}</p>
+                <span className="mt-4 rounded-full bg-slate-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-slate-400">{count} {count === 1 ? 'article' : 'articles'}</span>
               </button>
             );
           })}
         </div>
+      </section>
+
+      {/* Support CTA */}
+      <div className="flex flex-col items-start justify-between gap-4 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-6 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-3">
+          <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-white text-indigo-600 ring-1 ring-slate-200">
+            <LifeBuoy size={20} />
+          </span>
+          <div>
+            <p className="text-sm font-bold text-slate-900">Can’t find what you’re looking for?</p>
+            <p className="text-sm text-slate-500">Our support team typically replies within a few hours.</p>
+          </div>
+        </div>
+        <button
+          onClick={() => onSelectArticle('webhooks-integration')}
+          className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all hover:bg-indigo-700 active:scale-[0.98]"
+        >
+          Browse Developer API <ArrowRight size={15} />
+        </button>
       </div>
     </div>
   );
