@@ -88,9 +88,91 @@ function youtubeUploadApi() {
   };
 }
 
+function youtubeUploadChunkApi() {
+  const MAX_CHUNK_BYTES = 4_500_000;
+  return {
+    name: 'youtube-upload-chunk-api',
+    configureServer(server: any) {
+      server.middlewares.use('/api/youtube/upload-chunk', async (req: any, res: any) => {
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: 'Method not allowed.' }));
+          return;
+        }
+
+        try {
+          const queryString = (req.url || '').split('?')[1] || '';
+          const params = new URLSearchParams(queryString);
+          const uploadUrl = params.get('uploadUrl') || '';
+          const start = Number(params.get('start'));
+          const end = Number(params.get('end'));
+          const total = Number(params.get('total'));
+
+          res.setHeader('Content-Type', 'application/json');
+
+          if (!uploadUrl || !uploadUrl.startsWith('https://www.googleapis.com/')) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Missing or invalid upload session URL.' }));
+            return;
+          }
+          if (![start, end, total].every((value) => Number.isFinite(value) && value >= 0) || end <= start || end > total) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Invalid chunk range.' }));
+            return;
+          }
+          if (end - start > MAX_CHUNK_BYTES) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Chunk too large.' }));
+            return;
+          }
+
+          const chunks: Buffer[] = [];
+          for await (const piece of req) chunks.push(Buffer.from(piece));
+          const chunk = Buffer.concat(chunks);
+          if (chunk.length !== end - start) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'Chunk size does not match the declared range.' }));
+            return;
+          }
+
+          const googleRes = await fetch(uploadUrl, {
+            method: 'PUT',
+            headers: {
+              'Content-Length': String(chunk.length),
+              'Content-Range': `bytes ${start}-${end - 1}/${total}`,
+            },
+            body: chunk,
+          });
+
+          if (googleRes.status === 308) {
+            res.statusCode = 200;
+            res.end(JSON.stringify({ done: false }));
+            return;
+          }
+
+          if (googleRes.ok) {
+            const data = await googleRes.json().catch(() => ({}) as Record<string, unknown>);
+            res.statusCode = 200;
+            res.end(JSON.stringify({ done: true, id: (data as { id?: string }).id }));
+            return;
+          }
+
+          res.statusCode = 502;
+          res.end(JSON.stringify({ error: 'The video service rejected this chunk.', detail: await googleRes.text() }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to relay this chunk.' }));
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), clerkMetadataApi(), youtubeUploadApi(), cleanHtmlUrls()],
+    plugins: [react(), tailwindcss(), clerkMetadataApi(), youtubeUploadApi(), youtubeUploadChunkApi(), cleanHtmlUrls()],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),

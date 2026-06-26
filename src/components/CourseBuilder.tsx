@@ -109,17 +109,25 @@ export default function CourseBuilder({ setView }: Props) {
   const [uploadState, setUploadState] = useState<UploadState>('idle');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState('');
-  const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
+  const uploadAbortRef = useRef<AbortController | null>(null);
 
   const updateForm = (key: keyof ModuleFormState, value: string) => {
     setModuleForm((current) => ({ ...current, [key]: value }));
   };
+
+  // YouTube's upload endpoint doesn't support direct browser-to-Google CORS requests,
+  // so each chunk is relayed through our own same-origin server route instead of
+  // PUTing the file straight to Google from the browser.
+  const CHUNK_SIZE = 4_000_000;
 
   const startVideoUpload = async (file: File) => {
     setVideoFile(file);
     setUploadError('');
     setUploadProgress(0);
     setUploadState('uploading');
+
+    const controller = new AbortController();
+    uploadAbortRef.current = controller;
 
     try {
       const token = await getToken();
@@ -135,6 +143,7 @@ export default function CourseBuilder({ setView }: Props) {
           contentType: file.type || 'video/*',
           contentLength: file.size,
         }),
+        signal: controller.signal,
       });
 
       const rawBody = await initResponse.text();
@@ -153,43 +162,57 @@ export default function CourseBuilder({ setView }: Props) {
         throw new Error('Upload service did not return an upload URL.');
       }
 
-      const videoId = await new Promise<string>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        uploadXhrRef.current = xhr;
-        xhr.open('PUT', uploadUrl, true);
-        xhr.setRequestHeader('Content-Type', file.type || 'video/*');
+      let start = 0;
+      let videoId = '';
 
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(percent);
-            if (percent >= 100) setUploadState('processing');
-          }
-        };
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              if (response.id) resolve(response.id);
-              else reject(new Error('Upload finished but no video id was returned.'));
-            } catch {
-              reject(new Error('Upload finished but the response could not be read.'));
-            }
-          } else {
-            reject(new Error(`Upload failed (status ${xhr.status}).`));
-          }
-        };
-        xhr.onerror = () => reject(new Error('Network error during upload. Verify the upload service configuration.'));
-        xhr.onabort = () => reject(new Error('Upload cancelled.'));
-        xhr.send(file);
-      });
+      while (start < file.size) {
+        const end = Math.min(start + CHUNK_SIZE, file.size);
+        const chunk = file.slice(start, end);
+
+        const chunkResponse = await fetch(
+          `/api/youtube/upload-chunk?uploadUrl=${encodeURIComponent(uploadUrl)}&start=${start}&end=${end}&total=${file.size}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/octet-stream' },
+            body: chunk,
+            signal: controller.signal,
+          },
+        );
+
+        const chunkRaw = await chunkResponse.text();
+        let chunkData: { error?: string; done?: boolean; id?: string } = {};
+        try {
+          chunkData = JSON.parse(chunkRaw);
+        } catch {
+          chunkData = {};
+        }
+
+        if (!chunkResponse.ok) {
+          throw new Error(chunkData.error || `Upload failed while sending bytes ${start}-${end} (status ${chunkResponse.status}).`);
+        }
+
+        start = end;
+        setUploadProgress(Math.round((start / file.size) * 100));
+
+        if (chunkData.done) {
+          if (!chunkData.id) throw new Error('Upload finished but no video id was returned.');
+          videoId = chunkData.id;
+          break;
+        }
+      }
+
+      if (!videoId) throw new Error('Upload did not complete.');
 
       const playbackUrl = `https://www.youtube.com/watch?v=${videoId}`;
       setModuleForm((current) => ({ ...current, videoUrl: playbackUrl }));
       setUploadProgress(100);
       setUploadState('done');
     } catch (error) {
-      uploadXhrRef.current = null;
+      uploadAbortRef.current = null;
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setUploadState('idle');
+        return;
+      }
       setUploadState('error');
       setUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
     }
@@ -214,9 +237,9 @@ export default function CourseBuilder({ setView }: Props) {
   };
 
   const removeVideo = () => {
-    if (uploadXhrRef.current) {
-      uploadXhrRef.current.abort();
-      uploadXhrRef.current = null;
+    if (uploadAbortRef.current) {
+      uploadAbortRef.current.abort();
+      uploadAbortRef.current = null;
     }
     setVideoFile(null);
     setUploadState('idle');
@@ -248,9 +271,9 @@ export default function CourseBuilder({ setView }: Props) {
   };
 
   const resetPanel = () => {
-    if (uploadXhrRef.current) {
-      uploadXhrRef.current.abort();
-      uploadXhrRef.current = null;
+    if (uploadAbortRef.current) {
+      uploadAbortRef.current.abort();
+      uploadAbortRef.current = null;
     }
     setIsModulePanelOpen(false);
     setModuleForm(initialModuleForm);
