@@ -7,7 +7,7 @@
 
 import { createClient } from 'redis';
 
-const SITE_ORIGIN = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://xeacademy.com').replace(/\/$/, '');
+const SITE_ORIGIN = (process.env.SITE_URL || process.env.VITE_SITE_URL || 'https://www.xeacademy.com').replace(/\/$/, '');
 const CATALOG_KEY = 'xe:catalog';
 const BLOG_KEY = 'xe:blog';
 

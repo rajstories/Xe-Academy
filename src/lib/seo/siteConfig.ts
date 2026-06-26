@@ -7,7 +7,7 @@
 export const SITE = {
   // Canonical origin. No trailing slash. Used to build absolute URLs —
   // search engines index absolute, not relative, canonicals.
-  origin: 'https://xeacademy.com',
+  origin: 'https://www.xeacademy.com',
   name: 'XE Academy',
   legalName: 'XE Academy',
   // Default social share image (1200x630). Absolute URL required by scrapers.

@@ -45,4 +45,4 @@ Disallow: /studio
 Disallow: /admin
 
 # SEO Step: DISCOVERY — the sitemap is the primary URL-discovery feed for crawlers.
-Sitemap: https://xeacademy.com/sitemap.xml
+Sitemap: https://www.xeacademy.com/sitemap.xml
