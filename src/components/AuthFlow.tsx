@@ -222,15 +222,27 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
     setLoading(true);
     try {
       const alreadyVerified = signUp.verifications?.emailAddress?.status === 'verified';
-      const result = alreadyVerified ? signUp : await signUp.attemptEmailAddressVerification({ code: verificationCode });
+      let result = alreadyVerified ? signUp : await signUp.attemptEmailAddressVerification({ code: verificationCode });
+
+      // The email is verified, but Clerk may still require a username before the
+      // sign-up can complete. Our UI doesn't collect one, so derive it from the
+      // email and submit it automatically rather than dead-ending the user.
+      if (result.status !== 'complete' && result.missingFields?.includes('username')) {
+        const base = signUpForm.email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '').slice(0, 18) || 'user';
+        const username = `${base}${Math.floor(1000 + Math.random() * 9000)}`;
+        result = await signUp.update({ username });
+      }
 
       if (result.status === 'complete' && result.createdSessionId) {
         await setSignUpActive({ session: result.createdSessionId });
         setMode('onboarding');
-      } else if (alreadyVerified) {
-        setError('Your email is verified — finish creating your account by signing in.');
-      } else {
-        setError('Verification could not be completed. Please request a new code and try again.');
+      } else if (result.status !== 'complete') {
+        const missing = [...(result.missingFields || []), ...(result.unverifiedFields || [])];
+        setError(
+          missing.length
+            ? `Almost there — your account still needs: ${missing.join(', ')}.`
+            : 'Verification could not be completed. Please request a new code and try again.',
+        );
       }
     } catch (err) {
       setError(extractClerkError(err));
