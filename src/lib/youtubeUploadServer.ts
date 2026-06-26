@@ -1,5 +1,3 @@
-import { verifyToken } from '@clerk/backend';
-
 /**
  * Server-side scaffold for white-labeled video uploads backed by the YouTube Data API.
  *
@@ -57,6 +55,7 @@ export async function createResumableUpload(token: string | undefined, body: Cre
       return { status: 401, body: { error: 'Missing session token. Please sign in again.' } };
     }
     try {
+      const { verifyToken } = await import('@clerk/backend');
       const verified = await verifyToken(token, { secretKey: clerkSecret });
       if (!verified.sub) {
         return { status: 401, body: { error: 'Invalid session token. Please sign in again.' } };
