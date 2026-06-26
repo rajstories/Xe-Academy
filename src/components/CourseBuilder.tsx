@@ -118,7 +118,9 @@ export default function CourseBuilder({ setView }: Props) {
   // YouTube's upload endpoint doesn't support direct browser-to-Google CORS requests,
   // so each chunk is relayed through our own same-origin server route instead of
   // PUTing the file straight to Google from the browser.
-  const CHUNK_SIZE = 4_000_000;
+  // Google's resumable upload protocol requires every chunk except the final one
+  // to be an exact multiple of 256 KiB (262,144 bytes) — anything else gets rejected.
+  const CHUNK_SIZE = 16 * 262_144; // 4 MiB, comfortably under Vercel's ~4.5MB request limit
 
   const startVideoUpload = async (file: File) => {
     setVideoFile(file);
@@ -180,7 +182,7 @@ export default function CourseBuilder({ setView }: Props) {
         );
 
         const chunkRaw = await chunkResponse.text();
-        let chunkData: { error?: string; done?: boolean; id?: string } = {};
+        let chunkData: { error?: string; detail?: string; done?: boolean; id?: string } = {};
         try {
           chunkData = JSON.parse(chunkRaw);
         } catch {
@@ -188,7 +190,8 @@ export default function CourseBuilder({ setView }: Props) {
         }
 
         if (!chunkResponse.ok) {
-          throw new Error(chunkData.error || `Upload failed while sending bytes ${start}-${end} (status ${chunkResponse.status}).`);
+          const base = chunkData.error || `Upload failed while sending bytes ${start}-${end} (status ${chunkResponse.status}).`;
+          throw new Error(chunkData.detail ? `${base} ${chunkData.detail.slice(0, 200)}` : base);
         }
 
         start = end;
