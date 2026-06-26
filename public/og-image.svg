@@ -1,0 +1,51 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="glowA" cx="20%" cy="15%" r="55%">
+      <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#4f46e5" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowB" cx="88%" cy="90%" r="55%">
+      <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="markGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#818cf8"/>
+      <stop offset="100%" stop-color="#a78bfa"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="630" fill="#05050a"/>
+  <rect width="1200" height="630" fill="url(#glowA)"/>
+  <rect width="1200" height="630" fill="url(#glowB)"/>
+
+  <!-- subtle grid texture -->
+  <g opacity="0.05" stroke="#ffffff" stroke-width="1">
+    <line x1="0" y1="157" x2="1200" y2="157"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="472" x2="1200" y2="472"/>
+  </g>
+
+  <!-- mark -->
+  <g transform="translate(150,205)">
+    <g transform="scale(1.05)">
+      <rect x="-75" y="-17" width="150" height="34" transform="translate(82 80) rotate(50)" fill="url(#markGrad)"/>
+      <rect x="-75" y="-17" width="150" height="34" transform="translate(82 80) rotate(-50)" fill="url(#markGrad)"/>
+      <path d="M130,0H190L210,20L190,40H130Z" fill="url(#markGrad)"/>
+      <path d="M130,65H175L195,80L175,95H130Z" fill="url(#markGrad)"/>
+      <path d="M130,120H190L210,140L190,160H130Z" fill="url(#markGrad)"/>
+    </g>
+  </g>
+
+  <!-- wordmark -->
+  <text x="430" y="290" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="800" letter-spacing="2" fill="#ffffff">XE ACADEMY</text>
+
+  <!-- tagline -->
+  <text x="150" y="430" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" fill="#ffffff">Where creators, brands &amp; learners</text>
+  <text x="150" y="480" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" fill="#ffffff">grow together.</text>
+
+  <!-- footer line -->
+  <text x="150" y="555" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="600" fill="#a5b4fc">xeacademy.com</text>
+
+  <circle cx="895" cy="545" r="5" fill="#34d399"/>
+  <text x="915" y="554" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="600" fill="#cbd5e1">Cohort-based courses</text>
+</svg>
