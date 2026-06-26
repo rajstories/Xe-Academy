@@ -49,6 +49,8 @@ type Course = {
   lessons: number;
   students: number;
   updatedAt: string;
+  /** Set when this course was published to the shared student-facing catalog. */
+  catalogId?: string;
 };
 
 const starterCourses: Course[] = [
@@ -104,7 +106,7 @@ const emptyDraft = {
 
 export default function CreatorMyCourses({ setView }: Props) {
   const { user } = useUser();
-  const { publishCourse: publishToCatalog } = useCourseStore();
+  const { publishCourse: publishToCatalog, removeCourse: removeFromCatalog } = useCourseStore();
   const video = useVideoUpload();
   const [courses, setCourses] = useState<Course[]>(starterCourses);
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -185,13 +187,12 @@ export default function CreatorMyCourses({ setView }: Props) {
       students: 0,
       updatedAt: 'Just now',
     };
-    setCourses((current) => [course, ...current]);
 
     // Publish to the shared catalog so students see it in Browse Courses (only when actually Published).
     if (draft.status === 'Published') {
       setIsPublishing(true);
       try {
-        await publishToCatalog({
+        const published = await publishToCatalog({
           title,
           description: draft.description.trim(),
           category: draft.category,
@@ -201,6 +202,8 @@ export default function CreatorMyCourses({ setView }: Props) {
           videoUrl,
           lessons: videoUrl ? 1 : 0,
         });
+        course.catalogId = published.id;
+        setCourses((current) => [course, ...current]);
         setToast(`“${title}” is now live in the student portal · Browse Courses`);
       } catch (error) {
         setIsPublishing(false);
@@ -210,6 +213,7 @@ export default function CreatorMyCourses({ setView }: Props) {
       }
       setIsPublishing(false);
     } else {
+      setCourses((current) => [course, ...current]);
       setToast(`“${title}” saved as draft`);
     }
     window.setTimeout(() => setToast(''), 2600);
@@ -217,13 +221,26 @@ export default function CreatorMyCourses({ setView }: Props) {
   };
 
   const duplicateCourse = (course: Course) => {
-    setCourses((current) => [{ ...course, id: Date.now(), title: `${course.title} Copy`, status: 'Draft', updatedAt: 'Just now' }, ...current]);
+    // Duplicates as a local draft only — not re-published to the catalog until the creator publishes it.
+    setCourses((current) => [
+      { ...course, id: Date.now(), title: `${course.title} Copy`, status: 'Draft', updatedAt: 'Just now', catalogId: undefined },
+      ...current,
+    ]);
     setOpenMenuId(null);
   };
 
-  const deleteCourse = (courseId: number) => {
-    setCourses((current) => current.filter((course) => course.id !== courseId));
+  const deleteCourse = async (course: Course) => {
+    setCourses((current) => current.filter((c) => c.id !== course.id));
     setOpenMenuId(null);
+    if (!course.catalogId) return;
+    try {
+      await removeFromCatalog(course.catalogId);
+      setToast(`“${course.title}” removed from the student portal`);
+      window.setTimeout(() => setToast(''), 2600);
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Could not remove the course from the student portal.');
+      window.setTimeout(() => setToast(''), 3600);
+    }
   };
 
   return (
@@ -300,7 +317,7 @@ export default function CreatorMyCourses({ setView }: Props) {
                         <button onClick={() => duplicateCourse(course)} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900">
                           <Copy size={16} /> Duplicate Course
                         </button>
-                        <button onClick={() => deleteCourse(course.id)} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50">
+                        <button onClick={() => deleteCourse(course)} className="flex w-full items-center gap-2 px-4 py-2.5 text-left text-sm font-semibold text-rose-600 hover:bg-rose-50">
                           <Trash size={16} /> Delete Track
                         </button>
                       </motion.div>

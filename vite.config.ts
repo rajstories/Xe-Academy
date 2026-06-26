@@ -317,10 +317,21 @@ function coursesDevApi() {
             return;
           }
           const key = `xe:enroll:${auth.userId}`;
-          const current: string[] = (await kvGet(key)) || [];
-          const updated = current.includes(courseId) ? current : [...current, courseId];
+          const current: any[] = (await kvGet(key)) || [];
+          if (current.some((c) => c.id === courseId)) {
+            res.end(JSON.stringify({ enrolledCourses: current }));
+            return;
+          }
+          const catalog: any[] = (await kvGet('xe:catalog')) || [];
+          const course = catalog.find((c) => c.id === courseId);
+          if (!course) {
+            res.statusCode = 404;
+            res.end(JSON.stringify({ error: 'This course is no longer available.' }));
+            return;
+          }
+          const updated = [...current, course];
           await kvSet(key, updated);
-          res.end(JSON.stringify({ enrolledIds: updated }));
+          res.end(JSON.stringify({ enrolledCourses: updated }));
         } catch (error) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to enroll in this course.' }));
@@ -336,19 +347,55 @@ function coursesDevApi() {
         }
         try {
           if (!process.env.REDIS_URL) {
-            res.end(JSON.stringify({ enrolledIds: [] }));
+            res.end(JSON.stringify({ enrolledCourses: [] }));
             return;
           }
           const auth = await verifyClerk(req);
           if (!auth.ok || !auth.userId) {
-            res.end(JSON.stringify({ enrolledIds: [] }));
+            res.end(JSON.stringify({ enrolledCourses: [] }));
             return;
           }
-          const enrolledIds = (await kvGet(`xe:enroll:${auth.userId}`)) || [];
-          res.end(JSON.stringify({ enrolledIds }));
+          const enrolledCourses = (await kvGet(`xe:enroll:${auth.userId}`)) || [];
+          res.end(JSON.stringify({ enrolledCourses }));
         } catch (error) {
           res.statusCode = 500;
           res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to load enrollments.' }));
+        }
+      });
+
+      server.middlewares.use('/api/courses/remove', async (req: any, res: any) => {
+        res.setHeader('Content-Type', 'application/json');
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method not allowed.' }));
+          return;
+        }
+        try {
+          if (!process.env.REDIS_URL) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: 'Course storage is not configured yet. Connect a Redis store to this project in Vercel.' }));
+            return;
+          }
+          const auth = await verifyClerk(req);
+          if (!auth.ok) {
+            res.statusCode = 401;
+            res.end(JSON.stringify({ error: 'Missing or invalid session token. Please sign in again.' }));
+            return;
+          }
+          const body = await readJsonBody(req);
+          const courseId = (body.courseId || '').toString();
+          if (!courseId) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'A courseId is required.' }));
+            return;
+          }
+          const current: any[] = (await kvGet('xe:catalog')) || [];
+          const updated = current.filter((c) => c.id !== courseId);
+          await kvSet('xe:catalog', updated);
+          res.end(JSON.stringify({ catalog: updated }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to remove the course.' }));
         }
       });
     },

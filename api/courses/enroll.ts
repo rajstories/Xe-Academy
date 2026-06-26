@@ -2,6 +2,10 @@
  * Records a student's enrollment in a course, keyed by their Clerk user id,
  * in Redis (REDIS_URL). This is what makes "My Courses" show enrollments
  * from any device the student signs into.
+ *
+ * Stores a full snapshot of the course at enroll time (not just its id), so
+ * that if the creator later removes the course from the catalog, students
+ * who already enrolled keep access to it in My Courses.
  */
 
 import { createClient } from 'redis';
@@ -71,11 +75,25 @@ export default async function handler(req: any, res: any) {
 
     const key = `xe:enroll:${userId}`;
     const raw = (await redis.get(key)) as string | null;
-    const current: string[] = raw ? JSON.parse(raw) : [];
-    const updated = current.includes(courseId) ? current : [...current, courseId];
+    const current: any[] = raw ? JSON.parse(raw) : [];
+
+    if (current.some((c) => c.id === courseId)) {
+      res.status(200).json({ enrolledCourses: current });
+      return;
+    }
+
+    const catalogRaw = (await redis.get('xe:catalog')) as string | null;
+    const catalog: any[] = catalogRaw ? JSON.parse(catalogRaw) : [];
+    const course = catalog.find((c) => c.id === courseId);
+    if (!course) {
+      res.status(404).json({ error: 'This course is no longer available.' });
+      return;
+    }
+
+    const updated = [...current, course];
     await redis.set(key, JSON.stringify(updated));
 
-    res.status(200).json({ enrolledIds: updated });
+    res.status(200).json({ enrolledCourses: updated });
   } catch (error) {
     clientPromise = null;
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to enroll in this course.' });
