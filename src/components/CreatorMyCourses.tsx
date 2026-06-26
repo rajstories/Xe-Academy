@@ -1,6 +1,6 @@
 'use client';
 
-import { ChangeEvent, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BookOpen,
@@ -87,6 +87,16 @@ export default function CreatorMyCourses({ setView }: Props) {
   });
   const [customThumbnail, setCustomThumbnail] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Lock background scroll while the wizard is open so scroll gestures stay in the card.
+  useEffect(() => {
+    if (!wizardOpen) return;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, [wizardOpen]);
 
   const handleCustomThumbnail = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -248,9 +258,9 @@ export default function CreatorMyCourses({ setView }: Props) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 22, scale: 0.96 }}
               transition={{ type: 'spring', stiffness: 240, damping: 24 }}
-              className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl"
+              className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
             >
-              <div className="flex items-center justify-between border-b border-slate-100 p-6">
+              <div className="flex shrink-0 items-center justify-between border-b border-slate-100 p-6">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">Create New Course</h2>
                   <p className="mt-1 text-sm text-slate-500">Step {wizardStep + 1} of 4</p>
@@ -260,13 +270,13 @@ export default function CreatorMyCourses({ setView }: Props) {
                 </button>
               </div>
 
-              <div className="grid grid-cols-4 gap-2 px-6 pt-5">
+              <div className="grid shrink-0 grid-cols-4 gap-2 px-6 pt-5">
                 {[0, 1, 2, 3].map((step) => (
                   <div key={step} className={`h-1.5 rounded-full ${step <= wizardStep ? 'bg-indigo-600' : 'bg-slate-100'}`} />
                 ))}
               </div>
 
-              <div className="min-h-[320px] p-6">
+              <div className="min-h-[320px] flex-1 overflow-y-auto p-6">
                 {wizardStep === 0 && (
                   <div>
                     <label className="text-sm font-bold text-slate-900">Course Title</label>
@@ -372,7 +382,7 @@ export default function CreatorMyCourses({ setView }: Props) {
                 )}
               </div>
 
-              <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 p-6">
+              <div className="flex shrink-0 items-center justify-between border-t border-slate-100 bg-slate-50 p-6">
                 <button
                   onClick={() => setWizardStep((step) => Math.max(0, step - 1))}
                   disabled={wizardStep === 0}
