@@ -467,45 +467,47 @@ export default function CourseLearning({ setView }: Props) {
               ref={playerContainerRef}
               className="group relative aspect-video min-h-[420px] overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/10"
             >
-              <ReactPlayer
-                ref={playerRef as any}
-                src={currentVideoUrl}
-                width="100%"
-                height="100%"
-                playing={playing}
-                volume={volume}
-                playbackRate={playbackRate}
-                controls={false}
-                config={{
-                  youtube: {
-                    playerVars: {
-                      modestbranding: 1,
-                      rel: 0,
-                      showinfo: 0,
-                      controls: 0,
-                      disablekb: 1,
+              <div className="absolute inset-x-0 -inset-y-20 z-0">
+                <ReactPlayer
+                  ref={playerRef as any}
+                  src={currentVideoUrl}
+                  width="100%"
+                  height="100%"
+                  playing={playing}
+                  volume={volume}
+                  playbackRate={playbackRate}
+                  controls={false}
+                  config={{
+                    youtube: {
+                      playerVars: {
+                        modestbranding: 1,
+                        rel: 0,
+                        showinfo: 0,
+                        controls: 0,
+                        disablekb: 1,
+                      },
                     },
-                  },
-                } as any}
-                onReady={handlePlayerReady}
-                onPlay={() => setPlaying(true)}
-                onPause={() => setPlaying(false)}
-                onWaiting={startBuffering}
-                onSeeking={startBuffering}
-                onPlaying={markStarted}
-                onCanPlay={markStarted}
-                onSeeked={stopBuffering}
-                onTimeUpdate={(event: SyntheticEvent<HTMLVideoElement>) => {
-                  markStarted();
-                  handleTimeUpdate(event);
-                }}
-                onDurationChange={handleDurationChange}
-                onEnded={() => {
-                  setPlaying(false);
-                  stopBuffering();
-                }}
-                style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
-              />
+                  } as any}
+                  onReady={handlePlayerReady}
+                  onPlay={() => setPlaying(true)}
+                  onPause={() => setPlaying(false)}
+                  onWaiting={startBuffering}
+                  onSeeking={startBuffering}
+                  onPlaying={markStarted}
+                  onCanPlay={markStarted}
+                  onSeeked={stopBuffering}
+                  onTimeUpdate={(event: SyntheticEvent<HTMLVideoElement>) => {
+                    markStarted();
+                    handleTimeUpdate(event);
+                  }}
+                  onDurationChange={handleDurationChange}
+                  onEnded={() => {
+                    setPlaying(false);
+                    stopBuffering();
+                  }}
+                  style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
+                />
+              </div>
 
               {/* Opaque cover — hides YouTube's poster/logo on first load and its
                   spinner while buffering, replaced by our own branded loader. */}
@@ -517,7 +519,7 @@ export default function CourseLearning({ setView }: Props) {
                 </div>
               )}
 
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black via-black/70 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-black via-black/95 to-transparent" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 bg-gradient-to-t from-black via-black/95 to-transparent" />
 
               <button
