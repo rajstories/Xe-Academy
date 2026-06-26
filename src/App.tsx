@@ -11,6 +11,7 @@ import { GatewayScreen } from './components/GatewayScreen';
 import { DashboardApp } from './components/DashboardApp';
 import { CourseStoreProvider } from './lib/courseStore';
 import { AuthFlow } from './components/AuthFlow';
+import Documentation from './components/Documentation';
 import { AuthRole, getRoleDashboardPath } from './lib/auth';
 
 import { XeLogo } from './components/XeLogo';
@@ -767,6 +768,63 @@ function AppLoadingScreen() {
   );
 }
 
+function DocumentationStandalonePage() {
+  const { user, isSignedIn } = useUser();
+  const role = user?.publicMetadata?.role as string | undefined;
+  const dashboardPath = getRoleDashboardPath(role || 'student');
+
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    window.dispatchEvent(new PopStateEvent('popstate'));
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-950">
+      <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 w-full max-w-[1760px] items-center justify-between px-5 sm:px-8">
+          <button onClick={() => navigateTo('/')} className="flex items-center gap-3 text-left">
+            <XeLogo variant="full" theme="light" className="h-7 w-auto" />
+            <span className="hidden h-6 w-px bg-slate-200 sm:block" />
+            <span className="hidden text-sm font-semibold text-slate-500 sm:block">Documentation</span>
+          </button>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigateTo(isSignedIn ? dashboardPath : '/gateway')}
+              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 shadow-sm transition-all hover:border-indigo-200 hover:text-indigo-600 active:scale-95"
+            >
+              {isSignedIn ? 'Back to Dashboard' : 'Get Started'}
+            </button>
+            {isSignedIn && (
+              <div className="hidden items-center gap-2 rounded-full bg-indigo-50 px-2.5 py-1.5 text-sm font-bold text-indigo-700 sm:flex">
+                {user?.hasImage ? (
+                  <img src={user.imageUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
+                ) : (
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-indigo-600 text-xs text-white">
+                    {(user?.firstName?.[0] || 'X').toUpperCase()}
+                  </span>
+                )}
+                <span>{user?.firstName || 'XE User'}</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      <main className="mx-auto w-full max-w-[1760px] px-5 py-6 sm:px-8 lg:py-8">
+        <div className="mb-7">
+          <p className="text-xs font-black uppercase tracking-[0.22em] text-indigo-600">Developer guides and product manuals</p>
+          <h1 className="mt-2 text-3xl font-extrabold tracking-tight text-slate-950 md:text-4xl">Documentation</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            Find clear guides for learning workflows, creator tools, live sessions, billing, and developer integrations.
+          </p>
+        </div>
+        <Documentation />
+      </main>
+    </div>
+  );
+}
+
 export default function App() {
   const { isLoaded, isSignedIn, user } = useUser();
   const [currentPath, setCurrentPath] = useState(() => `${window.location.pathname}${window.location.search}`);
@@ -827,6 +885,10 @@ export default function App() {
         <DashboardApp initialRole={(role as any) || (pathname.startsWith('/studio') ? 'creator' : 'student')} />
       </CourseStoreProvider>
     );
+  }
+
+  if (pathname.startsWith('/documentation')) {
+    return <DocumentationStandalonePage />;
   }
 
   return (

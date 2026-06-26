@@ -467,7 +467,7 @@ export default function CourseLearning({ setView }: Props) {
               ref={playerContainerRef}
               className="group relative aspect-video min-h-[420px] overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/10"
             >
-              <div className="absolute inset-x-0 -inset-y-20 z-0">
+              <div className="absolute inset-x-0 -inset-y-28 z-0">
                 <ReactPlayer
                   ref={playerRef as any}
                   src={currentVideoUrl}
@@ -518,9 +518,6 @@ export default function CourseLearning({ setView }: Props) {
                   )}
                 </div>
               )}
-
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-32 bg-gradient-to-b from-black via-black/95 to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 bg-gradient-to-t from-black via-black/95 to-transparent" />
 
               <button
                 onClick={() => setPlaying((isPlaying) => !isPlaying)}

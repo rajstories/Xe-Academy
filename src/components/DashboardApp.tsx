@@ -230,6 +230,12 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
     // Mark as read
     setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
     if (notif.ctaView) {
+      if (notif.ctaView === 'documentation') {
+        window.history.pushState({}, '', '/documentation');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+        setNotificationsOpen(false);
+        return;
+      }
       setCurrentView(notif.ctaView);
       setNotificationsOpen(false);
     }

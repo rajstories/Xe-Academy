@@ -53,6 +53,15 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
     { id: 'help-support', label: 'Help & Support', icon: HelpCircle },
   ];
 
+  const openResource = (id: string) => {
+    if (id === 'documentation') {
+      window.history.pushState({}, '', '/documentation');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      return;
+    }
+    setActiveView(id as View);
+  };
+
   const planLabel = role === 'creator' ? 'Creator Pro' : role === 'admin' ? 'Admin Access' : 'Student Plan';
 
   return (
@@ -73,7 +82,7 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveView(item.id as View)}
+                onClick={() => openResource(item.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 text-sm font-medium
                   ${isActive
                     ? 'bg-primary/10 text-primary'
