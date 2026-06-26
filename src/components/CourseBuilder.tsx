@@ -137,11 +137,21 @@ export default function CourseBuilder({ setView }: Props) {
         }),
       });
 
-      const initData = await initResponse.json().catch(() => ({}));
-      if (!initResponse.ok) {
-        throw new Error(initData.error || 'Could not start the upload. Please try again.');
+      const rawBody = await initResponse.text();
+      let initData: { error?: string; uploadUrl?: string } = {};
+      try {
+        initData = JSON.parse(rawBody);
+      } catch {
+        initData = {};
       }
-      const uploadUrl: string = initData.uploadUrl;
+      if (!initResponse.ok) {
+        const detail = initData.error || rawBody.slice(0, 180) || 'No response from the upload service.';
+        throw new Error(`Upload service error (${initResponse.status}): ${detail}`);
+      }
+      const uploadUrl: string = initData.uploadUrl ?? '';
+      if (!uploadUrl) {
+        throw new Error('Upload service did not return an upload URL.');
+      }
 
       const videoId = await new Promise<string>((resolve, reject) => {
         const xhr = new XMLHttpRequest();
@@ -218,11 +228,13 @@ export default function CourseBuilder({ setView }: Props) {
   const handleThumbnailFile = (file?: File) => {
     if (!file || !file.type.startsWith('image/')) return;
 
-    if (moduleForm.thumbnailUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(moduleForm.thumbnailUrl);
-    }
-
-    updateForm('thumbnailUrl', URL.createObjectURL(file));
+    // Read as a base64 data URL (not a blob: URL) so the thumbnail persists in
+    // the saved module instead of breaking after a reload/re-render.
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') updateForm('thumbnailUrl', reader.result);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleThumbnailInput = (event: ChangeEvent<HTMLInputElement>) => {

@@ -102,10 +102,15 @@ export default function CreatorMyCourses({ setView }: Props) {
     const file = event.target.files?.[0];
     event.target.value = '';
     if (!file || !file.type.startsWith('image/')) return;
-    if (customThumbnail) URL.revokeObjectURL(customThumbnail);
-    const objectUrl = URL.createObjectURL(file);
-    setCustomThumbnail(objectUrl);
-    setDraft((current) => ({ ...current, thumbnail: objectUrl }));
+    // Use a base64 data URL so the thumbnail persists in the saved course
+    // instead of going blank after the temporary blob: URL is gone.
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') return;
+      setCustomThumbnail(reader.result);
+      setDraft((current) => ({ ...current, thumbnail: reader.result as string }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const stats = useMemo(
@@ -124,7 +129,6 @@ export default function CreatorMyCourses({ setView }: Props) {
     setWizardOpen(false);
     setWizardStep(0);
     setDraft({ title: '', category: 'Development', thumbnail: thumbnails[0], status: 'Published' });
-    if (customThumbnail) URL.revokeObjectURL(customThumbnail);
     setCustomThumbnail(null);
   };
 
