@@ -2,19 +2,37 @@
 
 import { ChangeEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useUser } from '@clerk/clerk-react';
 import {
   BookOpen,
   Check,
+  CheckCircle2,
   Copy,
   Edit,
+  FileVideo,
+  Loader2,
   MoreVertical,
   Plus,
+  RotateCcw,
   Trash,
+  Trash2,
   UploadCloud,
   Users,
   X,
 } from 'lucide-react';
 import { View } from '../types';
+import { useCourseStore } from '../lib/courseStore';
+import { useVideoUpload } from '../lib/useVideoUpload';
+import { getFullName } from '../lib/auth';
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
+
+const TOTAL_STEPS = 5;
 
 interface Props {
   setView: (view: View) => void;
@@ -73,20 +91,36 @@ const thumbnails = [
   'https://images.unsplash.com/photo-1551434678-e076c223a692?q=80&w=1200&auto=format&fit=crop',
 ];
 
+const emptyDraft = {
+  title: '',
+  description: '',
+  category: 'Development',
+  thumbnail: thumbnails[0],
+  status: 'Published' as CourseStatus,
+  isFree: true,
+  price: '',
+  videoUrl: '',
+};
+
 export default function CreatorMyCourses({ setView }: Props) {
+  const { user } = useUser();
+  const { publishCourse: publishToCatalog } = useCourseStore();
+  const video = useVideoUpload();
   const [courses, setCourses] = useState<Course[]>(starterCourses);
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(0);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [toast, setToast] = useState('');
-  const [draft, setDraft] = useState({
-    title: '',
-    category: 'Development',
-    thumbnail: thumbnails[0],
-    status: 'Published' as CourseStatus,
-  });
+  const [draft, setDraft] = useState(emptyDraft);
   const [customThumbnail, setCustomThumbnail] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleVideoFile = (file?: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('video/')) return;
+    video.startUpload(file, { title: draft.title, description: draft.description });
+  };
 
   // Lock background scroll while the wizard is open so scroll gestures stay in the card.
   useEffect(() => {
@@ -123,29 +157,52 @@ export default function CreatorMyCourses({ setView }: Props) {
     [courses]
   );
 
-  const canContinue = wizardStep === 0 ? draft.title.trim().length > 3 : true;
+  // Step gating: title required on step 0; video must finish uploading before leaving step 3.
+  const canContinue =
+    wizardStep === 0 ? draft.title.trim().length > 3 : wizardStep === 3 ? video.uploadState === 'done' : true;
 
   const resetWizard = () => {
     setWizardOpen(false);
     setWizardStep(0);
-    setDraft({ title: '', category: 'Development', thumbnail: thumbnails[0], status: 'Published' });
+    setDraft(emptyDraft);
     setCustomThumbnail(null);
+    video.reset();
   };
 
   const publishCourse = () => {
+    const title = draft.title.trim();
+    const videoUrl = video.videoUrl || draft.videoUrl;
+    const price = draft.isFree ? 0 : Math.max(0, Number(draft.price) || 0);
+
     const course: Course = {
       id: Date.now(),
-      title: draft.title.trim(),
+      title,
       category: draft.category,
       thumbnail: draft.thumbnail,
       status: draft.status,
-      lessons: 0,
+      lessons: videoUrl ? 1 : 0,
       students: 0,
       updatedAt: 'Just now',
     };
     setCourses((current) => [course, ...current]);
-    setToast(`${course.title} ${course.status === 'Published' ? 'published' : 'saved as draft'}`);
-    window.setTimeout(() => setToast(''), 1800);
+
+    // Publish to the shared catalog so students see it in Browse Courses (only when actually Published).
+    if (draft.status === 'Published') {
+      publishToCatalog({
+        title,
+        description: draft.description.trim(),
+        category: draft.category,
+        thumbnail: draft.thumbnail,
+        creatorName: getFullName(user || undefined) || 'XE Creator',
+        price,
+        videoUrl,
+        lessons: videoUrl ? 1 : 0,
+      });
+      setToast(`“${title}” is now live in the student portal · Browse Courses`);
+    } else {
+      setToast(`“${title}” saved as draft`);
+    }
+    window.setTimeout(() => setToast(''), 2600);
     resetWizard();
   };
 
@@ -267,15 +324,15 @@ export default function CreatorMyCourses({ setView }: Props) {
               <div className="flex shrink-0 items-center justify-between border-b border-slate-100 p-6">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900">Create New Course</h2>
-                  <p className="mt-1 text-sm text-slate-500">Step {wizardStep + 1} of 4</p>
+                  <p className="mt-1 text-sm text-slate-500">Step {wizardStep + 1} of {TOTAL_STEPS}</p>
                 </div>
                 <button onClick={resetWizard} className="rounded-xl p-2 text-slate-400 transition-all hover:bg-slate-50 hover:text-slate-900 active:scale-95">
                   <X size={20} />
                 </button>
               </div>
 
-              <div className="grid shrink-0 grid-cols-4 gap-2 px-6 pt-5">
-                {[0, 1, 2, 3].map((step) => (
+              <div className="grid shrink-0 grid-cols-5 gap-2 px-6 pt-5">
+                {[0, 1, 2, 3, 4].map((step) => (
                   <div key={step} className={`h-1.5 rounded-full ${step <= wizardStep ? 'bg-indigo-600' : 'bg-slate-100'}`} />
                 ))}
               </div>
@@ -290,7 +347,17 @@ export default function CreatorMyCourses({ setView }: Props) {
                       placeholder="Advanced React Patterns"
                       className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
                     />
-                    <p className="mt-3 text-sm text-slate-500">Use a specific title learners can understand at a glance.</p>
+                    <p className="mt-2 text-sm text-slate-500">Use a specific title learners can understand at a glance.</p>
+
+                    <label className="mt-6 block text-sm font-bold text-slate-900">Description</label>
+                    <textarea
+                      value={draft.description}
+                      onChange={(event) => setDraft((current) => ({ ...current, description: event.target.value }))}
+                      placeholder="What will students learn? Who is this course for?"
+                      rows={5}
+                      className="mt-2 w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-900 outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                    />
+                    <p className="mt-2 text-sm text-slate-500">This is what students read on the course detail page before enrolling.</p>
                   </div>
                 )}
 
@@ -365,22 +432,112 @@ export default function CreatorMyCourses({ setView }: Props) {
 
                 {wizardStep === 3 && (
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Publish Settings</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Course Video</h3>
+                    <p className="mt-1 text-sm text-slate-500">Upload your lesson video. It streams inside XE Academy for your students.</p>
+
+                    <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={(event) => { handleVideoFile(event.target.files?.[0]); event.target.value = ''; }} />
+
+                    {video.uploadState === 'idle' && (
+                      <div
+                        onClick={() => videoInputRef.current?.click()}
+                        onDrop={(event) => { event.preventDefault(); handleVideoFile(event.dataTransfer.files?.[0]); }}
+                        onDragOver={(event) => event.preventDefault()}
+                        className="mt-4 cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-10 text-center transition-colors hover:border-indigo-400 hover:bg-indigo-50/50"
+                      >
+                        <UploadCloud className="mx-auto h-12 w-12 text-slate-400" />
+                        <p className="mt-4 text-sm font-bold text-slate-900">Drag &amp; drop your video, or click to upload</p>
+                        <p className="mt-1 text-xs font-medium text-slate-500">MP4, MOV, or WebM.</p>
+                      </div>
+                    )}
+
+                    {(video.uploadState === 'uploading' || video.uploadState === 'processing') && (
+                      <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600"><FileVideo size={20} /></div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold text-slate-900">{video.videoFile?.name ?? 'Uploading video'}</p>
+                            <p className="text-xs font-medium text-slate-500">{video.videoFile ? formatBytes(video.videoFile.size) : ''} · {video.uploadProgress}%</p>
+                          </div>
+                        </div>
+                        <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+                          <div className="h-full rounded-full bg-indigo-600 transition-all duration-200" style={{ width: `${video.uploadProgress}%` }} />
+                        </div>
+                        <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-indigo-600"><Loader2 size={13} className="animate-spin" /> Uploading…</p>
+                      </div>
+                    )}
+
+                    {video.uploadState === 'done' && (
+                      <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600"><CheckCircle2 size={20} /></div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-bold text-slate-900">{video.videoFile?.name ?? 'Video uploaded'}</p>
+                            <p className="text-xs font-medium text-emerald-700">Ready — students will stream this inside the portal.</p>
+                          </div>
+                          <button onClick={() => video.reset()} className="rounded-lg p-2 text-slate-400 transition-all hover:bg-white hover:text-rose-500 active:scale-95" aria-label="Remove video"><Trash2 size={18} /></button>
+                        </div>
+                      </div>
+                    )}
+
+                    {video.uploadState === 'error' && (
+                      <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50/60 p-5">
+                        <p className="text-sm font-bold text-rose-700">Upload failed</p>
+                        <p className="mt-1 text-xs font-medium text-rose-600">{video.uploadError || 'Something went wrong. Please try again.'}</p>
+                        <button onClick={() => videoInputRef.current?.click()} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-bold text-rose-700 transition-all hover:bg-rose-50 active:scale-95"><RotateCcw size={15} /> Try again</button>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {wizardStep === 4 && (
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">Pricing</h3>
+                    <p className="mt-1 text-sm text-slate-500">Choose whether students get this free or pay to enroll.</p>
+
                     <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {(['Published', 'Draft'] as CourseStatus[]).map((status) => (
-                        <button
-                          key={status}
-                          onClick={() => setDraft((current) => ({ ...current, status }))}
-                          className={`rounded-2xl border p-5 text-left transition-all active:scale-95 ${
-                            draft.status === status ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-white text-slate-700 hover:border-indigo-200'
-                          }`}
-                        >
-                          <span className="flex items-center gap-2 font-bold">
-                            {draft.status === status && <Check size={17} />}
-                            {status === 'Published' ? 'Publish immediately' : 'Save as draft'}
-                          </span>
-                        </button>
-                      ))}
+                      <button
+                        onClick={() => setDraft((current) => ({ ...current, isFree: true }))}
+                        className={`rounded-2xl border p-5 text-left transition-all active:scale-95 ${draft.isFree ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-white text-slate-700 hover:border-indigo-200'}`}
+                      >
+                        <span className="flex items-center gap-2 font-bold">{draft.isFree && <Check size={17} />} Free</span>
+                        <span className="mt-1 block text-xs font-medium text-slate-500">Anyone can enroll instantly.</span>
+                      </button>
+                      <button
+                        onClick={() => setDraft((current) => ({ ...current, isFree: false }))}
+                        className={`rounded-2xl border p-5 text-left transition-all active:scale-95 ${!draft.isFree ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-white text-slate-700 hover:border-indigo-200'}`}
+                      >
+                        <span className="flex items-center gap-2 font-bold">{!draft.isFree && <Check size={17} />} Paid</span>
+                        <span className="mt-1 block text-xs font-medium text-slate-500">Set a price students pay to enroll.</span>
+                      </button>
+                    </div>
+
+                    {!draft.isFree && (
+                      <div className="mt-4">
+                        <label className="text-sm font-bold text-slate-900">Price (₹)</label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={draft.price}
+                          onChange={(event) => setDraft((current) => ({ ...current, price: event.target.value }))}
+                          placeholder="e.g. 1999"
+                          className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-900 outline-none transition-all focus:border-indigo-400 focus:bg-white focus:ring-4 focus:ring-indigo-100"
+                        />
+                      </div>
+                    )}
+
+                    <div className="mt-6 border-t border-slate-100 pt-5">
+                      <h3 className="text-sm font-bold text-slate-900">Visibility</h3>
+                      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                        {(['Published', 'Draft'] as CourseStatus[]).map((status) => (
+                          <button
+                            key={status}
+                            onClick={() => setDraft((current) => ({ ...current, status }))}
+                            className={`rounded-2xl border p-4 text-left transition-all active:scale-95 ${draft.status === status ? 'border-indigo-200 bg-indigo-50 text-indigo-700' : 'border-slate-100 bg-white text-slate-700 hover:border-indigo-200'}`}
+                          >
+                            <span className="flex items-center gap-2 font-bold">{draft.status === status && <Check size={17} />} {status === 'Published' ? 'Publish to student portal' : 'Save as draft'}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -394,13 +551,13 @@ export default function CreatorMyCourses({ setView }: Props) {
                 >
                   Back
                 </button>
-                {wizardStep < 3 ? (
+                {wizardStep < TOTAL_STEPS - 1 ? (
                   <button
                     onClick={() => setWizardStep((step) => step + 1)}
                     disabled={!canContinue}
                     className="rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition-all hover:bg-indigo-700 active:scale-95 disabled:opacity-40"
                   >
-                    Continue
+                    {wizardStep === 3 && video.uploadState !== 'done' ? 'Upload a video to continue' : 'Continue'}
                   </button>
                 ) : (
                   <button onClick={publishCourse} className="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition-all hover:shadow-lg active:scale-95">

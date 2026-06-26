@@ -22,6 +22,7 @@ import {
 // @ts-ignore
 import ReactPlayer from 'react-player';
 import { View } from '../types';
+import { useCourseStore } from '../lib/courseStore';
 
 interface Props {
   setView: (view: View) => void;
@@ -181,9 +182,12 @@ function formatTime(totalSeconds: number) {
 }
 
 export default function CourseLearning({ setView }: Props) {
+  const { activeCourseId, getCourse } = useCourseStore();
+  const activeCourse = activeCourseId ? getCourse(activeCourseId) : undefined;
   const initialLesson = curriculumData[1].lessons[1];
 
-  const [currentVideoUrl, setCurrentVideoUrl] = useState(initialLesson.videoUrl);
+  // When the student opened an enrolled marketplace course, play its uploaded video.
+  const [currentVideoUrl, setCurrentVideoUrl] = useState(activeCourse?.videoUrl || initialLesson.videoUrl);
   const [currentLesson, setCurrentLesson] = useState<Lesson>(initialLesson);
   const [playing, setPlaying] = useState(false);
   const [played, setPlayed] = useState(0);

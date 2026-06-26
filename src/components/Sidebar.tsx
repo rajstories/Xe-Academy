@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { LayoutDashboard, BookOpen, Calendar, Users, User, Settings, Video, FileText, BarChart3, DollarSign, HelpCircle, BookText, Sparkles } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Calendar, Users, User, Settings, Video, FileText, BarChart3, DollarSign, HelpCircle, BookText, Sparkles, Compass } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
 import { Role, View } from '../types';
 import { XeLogo } from './XeLogo';
@@ -21,6 +21,7 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
   const email = user?.primaryEmailAddress?.emailAddress || `${role}@xeacademy.com`;
   const studentNav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'browse-courses', label: 'Browse Courses', icon: Compass },
     { id: 'my-courses', label: 'My Courses', icon: BookOpen },
     { id: 'live-classes', label: 'Live Sessions', icon: Video },
     { id: 'community', label: 'Community', icon: Users },

@@ -20,6 +20,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import StudentDashboard from './StudentDashboard';
 import MyCourses from './MyCourses';
+import BrowseCourses from './BrowseCourses';
 import CourseLearning from './CourseLearning';
 import LiveClasses from './LiveClasses';
 import CreatorDashboard from './CreatorDashboard';
@@ -283,6 +284,7 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
     if (currentRouteRole === 'student') {
       switch (currentView) {
         case 'dashboard': return <StudentDashboard setView={setActiveView} onNotificationsClick={() => setNotificationsOpen(true)} />;
+        case 'browse-courses': return <BrowseCourses setView={setActiveView} />;
         case 'my-courses': return <MyCourses setView={setActiveView} />;
         case 'course-learning': return <CourseLearning setView={setActiveView} />;
         case 'live-classes': return <LiveClasses setView={setActiveView} />;

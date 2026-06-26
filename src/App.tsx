@@ -9,6 +9,7 @@ import { ArrowRight, Play, BookOpen, Presentation, Activity, Globe, ArrowUpRight
 import { LiquidMetalButton } from './components/ui/liquid-metal-button';
 import { GatewayScreen } from './components/GatewayScreen';
 import { DashboardApp } from './components/DashboardApp';
+import { CourseStoreProvider } from './lib/courseStore';
 import { AuthFlow } from './components/AuthFlow';
 import { AuthRole, getRoleDashboardPath } from './lib/auth';
 
@@ -821,7 +822,11 @@ export default function App() {
   }
 
   if (pathname.startsWith('/dashboard') || pathname.startsWith('/studio') || pathname.startsWith('/admin')) {
-    return <DashboardApp initialRole={(role as any) || (pathname.startsWith('/studio') ? 'creator' : 'student')} />;
+    return (
+      <CourseStoreProvider>
+        <DashboardApp initialRole={(role as any) || (pathname.startsWith('/studio') ? 'creator' : 'student')} />
+      </CourseStoreProvider>
+    );
   }
 
   return (

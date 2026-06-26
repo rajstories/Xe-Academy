@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { BookOpen, CheckCircle2, Play, Search } from 'lucide-react';
 import { View } from '../types';
+import { useCourseStore } from '../lib/courseStore';
 
 interface Props {
   setView: (view: View) => void;
@@ -13,7 +14,7 @@ type CourseStatus = 'in-progress' | 'completed' | 'not-started';
 type FilterKey = 'All' | 'In Progress' | 'Completed';
 
 interface Course {
-  id: number;
+  id: number | string;
   title: string;
   category: string;
   progress: number;
@@ -21,6 +22,8 @@ interface Course {
   totalLessons: number;
   status: CourseStatus;
   thumbnailUrl: string;
+  /** Set for courses enrolled from the marketplace; used to play the right video. */
+  catalogId?: string;
 }
 
 const filterToStatus: Record<Exclude<FilterKey, 'All'>, CourseStatus> = {
@@ -29,9 +32,10 @@ const filterToStatus: Record<Exclude<FilterKey, 'All'>, CourseStatus> = {
 };
 
 export default function MyCourses({ setView }: Props) {
+  const { enrolledCourses, setActiveCourseId } = useCourseStore();
   const [activeFilter, setActiveFilter] = useState<FilterKey>('All');
   const [searchTerm, setSearchTerm] = useState('');
-  const [courses] = useState<Course[]>([
+  const [demoCourses] = useState<Course[]>([
     {
       id: 1,
       title: 'Architecting Agentic Workflows',
@@ -94,6 +98,28 @@ export default function MyCourses({ setView }: Props) {
     },
   ]);
 
+  // Courses the student enrolled in from the marketplace, shown above the demo tracks.
+  const courses = useMemo<Course[]>(() => {
+    const enrolled: Course[] = enrolledCourses.map((c) => ({
+      id: c.id,
+      title: c.title,
+      category: c.category,
+      progress: 0,
+      completedLessons: 0,
+      totalLessons: c.lessons || 1,
+      status: 'not-started',
+      thumbnailUrl: c.thumbnail,
+      catalogId: c.id,
+    }));
+    return [...enrolled, ...demoCourses];
+  }, [enrolledCourses, demoCourses]);
+
+  const openCourse = (course: Course) => {
+    if (course.catalogId) setActiveCourseId(course.catalogId);
+    else setActiveCourseId(null);
+    setView('course-learning');
+  };
+
   const filteredCourses = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
@@ -152,7 +178,7 @@ export default function MyCourses({ setView }: Props) {
         <motion.div layout className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
           <AnimatePresence mode="popLayout">
             {filteredCourses.map((course) => (
-              <CourseCard key={course.id} course={course} onOpen={() => setView('course-learning')} />
+              <CourseCard key={course.id} course={course} onOpen={() => openCourse(course)} />
             ))}
           </AnimatePresence>
         </motion.div>
