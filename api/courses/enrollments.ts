@@ -1,7 +1,20 @@
 /**
- * Returns the signed-in student's enrolled course ids from Upstash Redis,
+ * Returns the signed-in student's enrolled course ids from Redis (REDIS_URL),
  * so My Courses shows the same enrollments on any device.
  */
+
+import { createClient } from 'redis';
+
+let clientPromise: Promise<any> | null = null;
+async function getRedis() {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  if (!clientPromise) {
+    const client = createClient({ url });
+    clientPromise = client.connect().then(() => client);
+  }
+  return clientPromise;
+}
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Content-Type', 'application/json');
@@ -12,9 +25,8 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const kvUrl = process.env.KV_REST_API_URL;
-    const kvToken = process.env.KV_REST_API_TOKEN;
-    if (!kvUrl || !kvToken) {
+    const redis = await getRedis();
+    if (!redis) {
       res.status(200).json({ enrolledIds: [] });
       return;
     }
@@ -40,12 +52,11 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const key = `xe:enroll:${userId}`;
-    const getRes = await fetch(`${kvUrl}/get/${key}`, { headers: { Authorization: `Bearer ${kvToken}` } });
-    const data = (await getRes.json().catch(() => ({}))) as { result?: string | null };
-    const enrolledIds = data.result ? JSON.parse(data.result) : [];
+    const raw = (await redis.get(`xe:enroll:${userId}`)) as string | null;
+    const enrolledIds = raw ? JSON.parse(raw) : [];
     res.status(200).json({ enrolledIds });
   } catch (error) {
+    clientPromise = null;
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load enrollments.' });
   }
 }

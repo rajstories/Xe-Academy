@@ -1,18 +1,23 @@
 /**
- * Public, shared course catalog — backed by Upstash Redis (via Vercel KV / the
- * Upstash Marketplace integration), so a course published on one device shows
- * up for every student on any device. Uses the REST API directly rather than
- * the (now deprecated) @vercel/kv package, so it works with either the legacy
- * Vercel KV integration or the newer Upstash Marketplace one — both expose the
- * same KV_REST_API_URL / KV_REST_API_TOKEN REST endpoint.
- *
- * Required environment variables (Vercel Storage tab → connect a KV/Redis
- * store to this project, which adds these automatically):
- *   KV_REST_API_URL
- *   KV_REST_API_TOKEN
+ * Public, shared course catalog — backed by Redis (Vercel Marketplace "Redis"
+ * product, connected via REDIS_URL), so a course published on one device
+ * shows up for every student on any device.
  */
 
+import { createClient } from 'redis';
+
 const CATALOG_KEY = 'xe:catalog';
+
+let clientPromise: Promise<any> | null = null;
+async function getRedis() {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  if (!clientPromise) {
+    const client = createClient({ url });
+    clientPromise = client.connect().then(() => client);
+  }
+  return clientPromise;
+}
 
 export default async function handler(req: any, res: any) {
   res.setHeader('Content-Type', 'application/json');
@@ -22,23 +27,18 @@ export default async function handler(req: any, res: any) {
     return;
   }
 
-  const kvUrl = process.env.KV_REST_API_URL;
-  const kvToken = process.env.KV_REST_API_TOKEN;
-  if (!kvUrl || !kvToken) {
-    // No store connected yet — degrade to an empty catalog instead of erroring,
-    // so the app still loads while the creator/owner finishes setup.
-    res.status(200).json({ catalog: [] });
-    return;
-  }
-
   try {
-    const kvRes = await fetch(`${kvUrl}/get/${CATALOG_KEY}`, {
-      headers: { Authorization: `Bearer ${kvToken}` },
-    });
-    const data = (await kvRes.json().catch(() => ({}))) as { result?: string | null };
-    const catalog = data.result ? JSON.parse(data.result) : [];
+    const redis = await getRedis();
+    if (!redis) {
+      // No store connected yet — degrade to an empty catalog instead of erroring.
+      res.status(200).json({ catalog: [] });
+      return;
+    }
+    const raw = (await redis.get(CATALOG_KEY)) as string | null;
+    const catalog = raw ? JSON.parse(raw) : [];
     res.status(200).json({ catalog });
   } catch (error) {
+    clientPromise = null;
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load the catalog.' });
   }
 }

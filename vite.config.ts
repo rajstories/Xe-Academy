@@ -177,18 +177,29 @@ async function readJsonBody(req: any) {
   return raw ? JSON.parse(raw) : {};
 }
 
-async function kvGet(kvUrl: string, kvToken: string, key: string) {
-  const res = await fetch(`${kvUrl}/get/${key}`, { headers: { Authorization: `Bearer ${kvToken}` } });
-  const data = (await res.json().catch(() => ({}))) as { result?: string | null };
-  return data.result ? JSON.parse(data.result) : null;
+let devRedisClientPromise: Promise<any> | null = null;
+async function getDevRedis() {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  if (!devRedisClientPromise) {
+    const { createClient } = await import('redis');
+    const client = createClient({ url });
+    devRedisClientPromise = client.connect().then(() => client);
+  }
+  return devRedisClientPromise;
 }
 
-async function kvSet(kvUrl: string, kvToken: string, key: string, value: unknown) {
-  return fetch(`${kvUrl}/set/${key}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${kvToken}` },
-    body: JSON.stringify(value),
-  });
+async function kvGet(key: string) {
+  const redis = await getDevRedis();
+  if (!redis) return null;
+  const raw = await redis.get(key);
+  return raw ? JSON.parse(raw) : null;
+}
+
+async function kvSet(key: string, value: unknown) {
+  const redis = await getDevRedis();
+  if (!redis) throw new Error('Redis is not configured.');
+  await redis.set(key, JSON.stringify(value));
 }
 
 async function verifyClerk(req: any): Promise<{ ok: boolean; userId?: string }> {
@@ -205,7 +216,7 @@ async function verifyClerk(req: any): Promise<{ ok: boolean; userId?: string }> 
   }
 }
 
-// Dev-server mirror of api/courses/*.ts (Upstash Redis via Vercel KV) so the
+// Dev-server mirror of api/courses/*.ts (Redis via REDIS_URL) so the
 // creator→student course catalog and enrollments work the same locally.
 function coursesDevApi() {
   return {
@@ -219,13 +230,11 @@ function coursesDevApi() {
           return;
         }
         try {
-          const kvUrl = process.env.KV_REST_API_URL;
-          const kvToken = process.env.KV_REST_API_TOKEN;
-          if (!kvUrl || !kvToken) {
+          if (!process.env.REDIS_URL) {
             res.end(JSON.stringify({ catalog: [] }));
             return;
           }
-          const catalog = (await kvGet(kvUrl, kvToken, 'xe:catalog')) || [];
+          const catalog = (await kvGet('xe:catalog')) || [];
           res.end(JSON.stringify({ catalog }));
         } catch (error) {
           res.statusCode = 500;
@@ -241,11 +250,9 @@ function coursesDevApi() {
           return;
         }
         try {
-          const kvUrl = process.env.KV_REST_API_URL;
-          const kvToken = process.env.KV_REST_API_TOKEN;
-          if (!kvUrl || !kvToken) {
+          if (!process.env.REDIS_URL) {
             res.statusCode = 500;
-            res.end(JSON.stringify({ error: 'Course storage is not configured yet. Connect a KV/Redis store to this project in Vercel.' }));
+            res.end(JSON.stringify({ error: 'Course storage is not configured yet. Connect a Redis store to this project in Vercel.' }));
             return;
           }
           const auth = await verifyClerk(req);
@@ -273,14 +280,9 @@ function coursesDevApi() {
             lessons: Math.max(0, Number(body.lessons) || 0),
             publishedAt: Date.now(),
           };
-          const current = (await kvGet(kvUrl, kvToken, 'xe:catalog')) || [];
+          const current = (await kvGet('xe:catalog')) || [];
           const updated = [course, ...current];
-          const setRes = await kvSet(kvUrl, kvToken, 'xe:catalog', updated);
-          if (!setRes.ok) {
-            res.statusCode = 502;
-            res.end(JSON.stringify({ error: 'Failed to save the course to storage.', detail: await setRes.text() }));
-            return;
-          }
+          await kvSet('xe:catalog', updated);
           res.end(JSON.stringify({ course, catalog: updated }));
         } catch (error) {
           res.statusCode = 500;
@@ -296,11 +298,9 @@ function coursesDevApi() {
           return;
         }
         try {
-          const kvUrl = process.env.KV_REST_API_URL;
-          const kvToken = process.env.KV_REST_API_TOKEN;
-          if (!kvUrl || !kvToken) {
+          if (!process.env.REDIS_URL) {
             res.statusCode = 500;
-            res.end(JSON.stringify({ error: 'Course storage is not configured yet. Connect a KV/Redis store to this project in Vercel.' }));
+            res.end(JSON.stringify({ error: 'Course storage is not configured yet. Connect a Redis store to this project in Vercel.' }));
             return;
           }
           const auth = await verifyClerk(req);
@@ -317,14 +317,9 @@ function coursesDevApi() {
             return;
           }
           const key = `xe:enroll:${auth.userId}`;
-          const current: string[] = (await kvGet(kvUrl, kvToken, key)) || [];
+          const current: string[] = (await kvGet(key)) || [];
           const updated = current.includes(courseId) ? current : [...current, courseId];
-          const setRes = await kvSet(kvUrl, kvToken, key, updated);
-          if (!setRes.ok) {
-            res.statusCode = 502;
-            res.end(JSON.stringify({ error: 'Failed to save the enrollment.', detail: await setRes.text() }));
-            return;
-          }
+          await kvSet(key, updated);
           res.end(JSON.stringify({ enrolledIds: updated }));
         } catch (error) {
           res.statusCode = 500;
@@ -340,9 +335,7 @@ function coursesDevApi() {
           return;
         }
         try {
-          const kvUrl = process.env.KV_REST_API_URL;
-          const kvToken = process.env.KV_REST_API_TOKEN;
-          if (!kvUrl || !kvToken) {
+          if (!process.env.REDIS_URL) {
             res.end(JSON.stringify({ enrolledIds: [] }));
             return;
           }
@@ -351,7 +344,7 @@ function coursesDevApi() {
             res.end(JSON.stringify({ enrolledIds: [] }));
             return;
           }
-          const enrolledIds = (await kvGet(kvUrl, kvToken, `xe:enroll:${auth.userId}`)) || [];
+          const enrolledIds = (await kvGet(`xe:enroll:${auth.userId}`)) || [];
           res.end(JSON.stringify({ enrolledIds }));
         } catch (error) {
           res.statusCode = 500;

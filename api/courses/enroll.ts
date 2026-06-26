@@ -1,8 +1,21 @@
 /**
  * Records a student's enrollment in a course, keyed by their Clerk user id,
- * in Upstash Redis (KV_REST_API_URL/KV_REST_API_TOKEN). This is what makes
- * "My Courses" show enrollments from any device the student signs into.
+ * in Redis (REDIS_URL). This is what makes "My Courses" show enrollments
+ * from any device the student signs into.
  */
+
+import { createClient } from 'redis';
+
+let clientPromise: Promise<any> | null = null;
+async function getRedis() {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  if (!clientPromise) {
+    const client = createClient({ url });
+    clientPromise = client.connect().then(() => client);
+  }
+  return clientPromise;
+}
 
 async function readRequestBody(req: any) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -22,10 +35,9 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const kvUrl = process.env.KV_REST_API_URL;
-    const kvToken = process.env.KV_REST_API_TOKEN;
-    if (!kvUrl || !kvToken) {
-      res.status(500).json({ error: 'Course storage is not configured yet. Connect a KV/Redis store to this project in Vercel.' });
+    const redis = await getRedis();
+    if (!redis) {
+      res.status(500).json({ error: 'Course storage is not configured yet. Connect a Redis store to this project in Vercel.' });
       return;
     }
 
@@ -58,23 +70,14 @@ export default async function handler(req: any, res: any) {
     }
 
     const key = `xe:enroll:${userId}`;
-    const getRes = await fetch(`${kvUrl}/get/${key}`, { headers: { Authorization: `Bearer ${kvToken}` } });
-    const getData = (await getRes.json().catch(() => ({}))) as { result?: string | null };
-    const current: string[] = getData.result ? JSON.parse(getData.result) : [];
+    const raw = (await redis.get(key)) as string | null;
+    const current: string[] = raw ? JSON.parse(raw) : [];
     const updated = current.includes(courseId) ? current : [...current, courseId];
-
-    const setRes = await fetch(`${kvUrl}/set/${key}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${kvToken}` },
-      body: JSON.stringify(updated),
-    });
-    if (!setRes.ok) {
-      res.status(502).json({ error: 'Failed to save the enrollment.', detail: await setRes.text() });
-      return;
-    }
+    await redis.set(key, JSON.stringify(updated));
 
     res.status(200).json({ enrolledIds: updated });
   } catch (error) {
+    clientPromise = null;
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to enroll in this course.' });
   }
 }

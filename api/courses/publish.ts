@@ -1,8 +1,23 @@
 /**
- * Publishes a creator's course to the shared catalog (Upstash Redis via
- * KV_REST_API_URL/KV_REST_API_TOKEN — see api/courses/list.ts for details).
- * Requires a signed-in Clerk session when CLERK_SECRET_KEY is configured.
+ * Publishes a creator's course to the shared catalog (Redis via REDIS_URL —
+ * see api/courses/list.ts for details). Requires a signed-in Clerk session
+ * when CLERK_SECRET_KEY is configured.
  */
+
+import { createClient } from 'redis';
+
+const CATALOG_KEY = 'xe:catalog';
+
+let clientPromise: Promise<any> | null = null;
+async function getRedis() {
+  const url = process.env.REDIS_URL;
+  if (!url) return null;
+  if (!clientPromise) {
+    const client = createClient({ url });
+    clientPromise = client.connect().then(() => client);
+  }
+  return clientPromise;
+}
 
 async function readRequestBody(req: any) {
   if (req.body && typeof req.body === 'object') return req.body;
@@ -13,8 +28,6 @@ async function readRequestBody(req: any) {
   return raw ? JSON.parse(raw) : {};
 }
 
-const CATALOG_KEY = 'xe:catalog';
-
 export default async function handler(req: any, res: any) {
   res.setHeader('Content-Type', 'application/json');
 
@@ -24,10 +37,9 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const kvUrl = process.env.KV_REST_API_URL;
-    const kvToken = process.env.KV_REST_API_TOKEN;
-    if (!kvUrl || !kvToken) {
-      res.status(500).json({ error: 'Course storage is not configured yet. Connect a KV/Redis store to this project in Vercel.' });
+    const redis = await getRedis();
+    if (!redis) {
+      res.status(500).json({ error: 'Course storage is not configured yet. Connect a Redis store to this project in Vercel.' });
       return;
     }
 
@@ -71,23 +83,14 @@ export default async function handler(req: any, res: any) {
       publishedAt: Date.now(),
     };
 
-    const getRes = await fetch(`${kvUrl}/get/${CATALOG_KEY}`, { headers: { Authorization: `Bearer ${kvToken}` } });
-    const getData = (await getRes.json().catch(() => ({}))) as { result?: string | null };
-    const current = getData.result ? JSON.parse(getData.result) : [];
+    const raw = (await redis.get(CATALOG_KEY)) as string | null;
+    const current = raw ? JSON.parse(raw) : [];
     const updated = [course, ...current];
-
-    const setRes = await fetch(`${kvUrl}/set/${CATALOG_KEY}`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${kvToken}` },
-      body: JSON.stringify(updated),
-    });
-    if (!setRes.ok) {
-      res.status(502).json({ error: 'Failed to save the course to storage.', detail: await setRes.text() });
-      return;
-    }
+    await redis.set(CATALOG_KEY, JSON.stringify(updated));
 
     res.status(200).json({ course, catalog: updated });
   } catch (error) {
+    clientPromise = null;
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to publish the course.' });
   }
 }
