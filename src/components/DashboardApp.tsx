@@ -87,7 +87,11 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
   const { user, isLoaded } = useUser();
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [currentRouteRole, setCurrentRouteRole] = useState<Role>(initialRole);
-  const [currentView, setCurrentView] = useState<View>('dashboard');
+  const [currentView, setCurrentView] = useState<View>(() => {
+    const path = window.location.pathname;
+    const parts = path.split('/').filter(Boolean);
+    return parts[1] || 'dashboard';
+  });
 
   // Notifications state
   const [notifications, setNotifications] = useState<XENotification[]>(() => {
@@ -211,16 +215,43 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
     setCurrentRouteRole(resolvedRole);
   }, [initialRole, isLoaded, user?.publicMetadata?.role]);
 
+  const getPathForView = (role: Role, view: View) => {
+    const base = role === 'admin' ? '/admin' : role === 'creator' ? '/studio' : '/dashboard';
+    if (view === 'dashboard') return base;
+    return `${base}/${view}`;
+  };
+
   const setRole = (newRole: Role) => {
     localStorage.setItem('xe_active_role', newRole);
     setUserRole(newRole);
     setCurrentRouteRole(newRole);
     setCurrentView('dashboard');
+    const newPath = newRole === 'admin' ? '/admin' : newRole === 'creator' ? '/studio' : '/dashboard';
+    window.history.pushState({}, '', newPath);
   };
 
   const setActiveView = (newView: View) => {
     setCurrentView(newView);
+    const newPath = getPathForView(currentRouteRole, newView);
+    window.history.pushState({}, '', newPath);
   };
+
+  useEffect(() => {
+    const handlePopState = () => {
+      const path = window.location.pathname;
+      const parts = path.split('/').filter(Boolean);
+      const base = parts[0];
+      const view = parts[1] || 'dashboard';
+      
+      const expectedBase = currentRouteRole === 'admin' ? 'admin' : currentRouteRole === 'creator' ? 'studio' : 'dashboard';
+      if (base === expectedBase) {
+        setCurrentView(view);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentRouteRole]);
 
   const markAllAsRead = () => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));

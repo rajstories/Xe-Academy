@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Search,
   Menu,
@@ -62,6 +62,83 @@ const DOC_SECTIONS: DocSection[] = [
   { id: 'developer-api', label: 'Developer API', description: 'Integrate the catalog and subscribe to event webhooks.', icon: Terminal },
   { id: 'troubleshooting', label: 'Troubleshooting', description: 'Fix common errors and check requirements.', icon: LifeBuoy },
 ];
+
+function PremiumDocIcon({ type, size = 'md' }: { type: SectionId; size?: 'sm' | 'md' | 'lg' }) {
+  const boxSize = size === 'sm' ? 'h-6 w-6 rounded-lg' : size === 'lg' ? 'h-11 w-11 rounded-xl' : 'h-9 w-9 rounded-xl';
+  const svgSize = size === 'sm' ? 'h-4 w-4' : size === 'lg' ? 'h-7 w-7' : 'h-5 w-5';
+  const gradientId = `doc-icon-${type}`;
+
+  const paths: Record<SectionId, React.ReactNode> = {
+    'getting-started': (
+      <>
+        <path d="M31 7c-7 2.2-12 8.6-13.4 16.5l-7.1 3 4.2 4.2-3.2 8.8 8.8-3.2 4.2 4.2 3-7.1C35.4 32 41.8 27 44 20l-8.5-4.5L31 7Z" fill={`url(#${gradientId})`} />
+        <circle cx="31.5" cy="19.5" r="4" fill="white" opacity=".95" />
+        <path d="M19 36c-2.8 1.4-4.7 3.8-5.5 7.5 3.7-.8 6.1-2.7 7.5-5.5" stroke="#FBBF24" strokeWidth="3" strokeLinecap="round" />
+      </>
+    ),
+    'courses-lessons': (
+      <>
+        <path d="M11 13.5c0-2 1.7-3.5 3.7-3.1 4.8.9 8.5 2.9 11.3 6.1v27c-3.1-2.7-6.8-4.5-11.3-5.3-2-.4-3.7 1.1-3.7 3.1V13.5Z" fill={`url(#${gradientId})`} />
+        <path d="M26 16.5c2.8-3.2 6.5-5.2 11.3-6.1 2-.4 3.7 1.1 3.7 3.1v27.8c0-2-1.7-3.5-3.7-3.1-4.5.8-8.2 2.6-11.3 5.3v-27Z" fill="#C4B5FD" />
+        <path d="M17 20h5M17 27h5M31 20h5M31 27h5" stroke="white" strokeWidth="2.4" strokeLinecap="round" opacity=".95" />
+      </>
+    ),
+    'live-sessions': (
+      <>
+        <rect x="10" y="15" width="25" height="22" rx="6" fill={`url(#${gradientId})`} />
+        <path d="m35 23 9-5.5c1.4-.8 3 .2 3 1.8v13.4c0 1.6-1.6 2.6-3 1.8L35 29v-6Z" fill="#2DD4BF" />
+        <circle cx="18" cy="22" r="3" fill="white" opacity=".95" />
+        <path d="M17 31h10" stroke="white" strokeWidth="2.8" strokeLinecap="round" opacity=".9" />
+      </>
+    ),
+    'for-creators': (
+      <>
+        <path d="M25 9 29.4 20 41 24.4 29.4 28.8 25 40 20.6 28.8 9 24.4 20.6 20 25 9Z" fill={`url(#${gradientId})`} />
+        <path d="M39 8l2.3 5.7L47 16l-5.7 2.3L39 24l-2.3-5.7L31 16l5.7-2.3L39 8Z" fill="#FBBF24" />
+        <path d="M37 34l1.5 3.5L42 39l-3.5 1.5L37 44l-1.5-3.5L32 39l3.5-1.5L37 34Z" fill="#2DD4BF" />
+      </>
+    ),
+    'account-billing': (
+      <>
+        <rect x="9" y="14" width="38" height="28" rx="8" fill={`url(#${gradientId})`} />
+        <path d="M9 22h38" stroke="white" strokeWidth="3" opacity=".9" />
+        <rect x="15" y="30" width="12" height="5" rx="2.5" fill="white" opacity=".95" />
+        <path d="M34 33h6" stroke="#FBBF24" strokeWidth="3" strokeLinecap="round" />
+      </>
+    ),
+    'developer-api': (
+      <>
+        <rect x="10" y="11" width="36" height="34" rx="8" fill="#111827" />
+        <path d="M18 24 23 29l-5 5M29 35h10" stroke={`url(#${gradientId})`} strokeWidth="3.4" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx="18" cy="18" r="2" fill="#F87171" />
+        <circle cx="25" cy="18" r="2" fill="#FBBF24" />
+        <circle cx="32" cy="18" r="2" fill="#34D399" />
+      </>
+    ),
+    troubleshooting: (
+      <>
+        <circle cx="28" cy="28" r="18" fill={`url(#${gradientId})`} />
+        <path d="m17 17 7 7M39 17l-7 7M17 39l7-7M39 39l-7-7" stroke="white" strokeWidth="3" strokeLinecap="round" />
+        <circle cx="28" cy="28" r="6" fill="white" opacity=".95" />
+        <path d="M28 22v12M22 28h12" stroke="#4F46E5" strokeWidth="2.4" strokeLinecap="round" />
+      </>
+    ),
+  };
+
+  return (
+    <span className={`inline-grid shrink-0 place-items-center bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100 shadow-sm shadow-indigo-500/5 ${boxSize}`}>
+      <svg className={`${svgSize} overflow-visible`} viewBox="0 0 56 56" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id={gradientId} x1="8" y1="8" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#7C3AED" />
+            <stop offset="1" stopColor="#4F46E5" />
+          </linearGradient>
+        </defs>
+        {paths[type]}
+      </svg>
+    </span>
+  );
+}
 
 const ARTICLES: Article[] = [
   {
@@ -565,7 +642,6 @@ function NavTree({
         const articles = ARTICLES.filter((article) => article.sectionId === section.id && (!normalizedQuery || article.title.toLowerCase().includes(normalizedQuery)));
         if (normalizedQuery && articles.length === 0) return null;
         const isExpanded = expanded.has(section.id) || Boolean(normalizedQuery);
-        const Icon = section.icon;
 
         return (
           <div key={section.id} className="pb-1">
@@ -574,7 +650,7 @@ function NavTree({
               className="flex w-full items-center justify-between gap-2 rounded-xl px-2.5 py-2 text-left text-xs font-bold uppercase tracking-wide text-slate-500 transition-colors hover:bg-slate-50 hover:text-slate-700"
             >
               <span className="flex items-center gap-2">
-                <Icon size={14} className="text-indigo-500" />
+                <PremiumDocIcon type={section.id} size="sm" />
                 {section.label}
               </span>
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -857,12 +933,9 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
         <div className="divide-y divide-slate-100">
           {popular.map((article) => {
             const section = DOC_SECTIONS.find((s) => s.id === article.sectionId);
-            const Icon = section?.icon ?? BookOpen;
             return (
               <button key={article.slug} onClick={() => onSelectArticle(article.slug)} className="group flex w-full items-center gap-4 py-4 text-left">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
-                  <Icon size={18} />
-                </span>
+                <PremiumDocIcon type={section?.id ?? 'getting-started'} size="md" />
                 <span className="min-w-0 flex-1">
                   <span className="block text-base font-bold text-slate-900 group-hover:text-indigo-600">{article.title}</span>
                   <span className="mt-1 flex items-center gap-1.5 text-sm text-slate-400"><Clock size={13} /> {article.readTime}</span>
@@ -878,12 +951,11 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
         <h2 className="mb-4 border-b border-slate-200 pb-3 text-xl font-extrabold tracking-tight text-slate-950">Browse by topic</h2>
         <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2">
           {DOC_SECTIONS.map((section) => {
-            const Icon = section.icon;
             const count = ARTICLES.filter((a) => a.sectionId === section.id).length;
             return (
               <button key={section.id} onClick={() => onSelectSection(section.id)} className="group flex items-start gap-3 text-left">
-                <span className="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-indigo-50 text-indigo-600">
-                  <Icon size={17} />
+                <span className="mt-1">
+                  <PremiumDocIcon type={section.id} size="md" />
                 </span>
                 <span>
                   <span className="flex items-center gap-2 text-base font-bold text-slate-950 group-hover:text-indigo-600">
@@ -900,9 +972,7 @@ function DocsHome({ query, setQuery, onSelectSection, onSelectArticle }: { query
 
       <div className="flex flex-col items-start justify-between gap-4 border-t border-slate-200 pt-6 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-indigo-600 ring-1 ring-slate-200">
-            <LifeBuoy size={19} />
-          </span>
+          <PremiumDocIcon type="troubleshooting" size="lg" />
           <div>
             <p className="text-sm font-bold text-slate-900">Can’t find what you’re looking for?</p>
             <p className="text-sm text-slate-500">Browse the API docs or contact support for product-specific help.</p>
