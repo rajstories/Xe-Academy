@@ -1,6 +1,21 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
+    { "source": "/sitemap.xml", "destination": "/api/sitemap?type=index" },
+    { "source": "/sitemap-static.xml", "destination": "/api/sitemap?type=static" },
+    { "source": "/sitemap-courses.xml", "destination": "/api/sitemap?type=courses" },
+    { "source": "/sitemap-blog.xml", "destination": "/api/sitemap?type=blog" },
     { "source": "/login", "destination": "/login.html" },
     { "source": "/((?!api/.*).*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/assets/(.*)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+    },
+    {
+      "source": "/(.*)\\.(png|jpg|jpeg|webp|avif|svg|woff2|mp4|ico)",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000, immutable" }]
+    }
   ]
 }

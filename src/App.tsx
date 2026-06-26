@@ -12,7 +12,10 @@ import { DashboardApp } from './components/DashboardApp';
 import { CourseStoreProvider } from './lib/courseStore';
 import { AuthFlow } from './components/AuthFlow';
 import Documentation from './components/Documentation';
+import { PublicCourseCatalogPage, PublicCourseDetailPage } from './components/PublicCourses';
 import { AuthRole, getRoleDashboardPath } from './lib/auth';
+import { SEOHead } from './lib/seo/SEOHead';
+import { JsonLd, breadcrumbSchema, organizationSchema } from './lib/seo/JsonLd';
 
 import { XeLogo } from './components/XeLogo';
 
@@ -144,6 +147,8 @@ function Hero() {
                 autoPlay
                 muted
                 playsInline
+                preload="metadata"
+                poster="/hero-img-1.jpg"
                 onEnded={handleVideoEnded}
                 src={item.src}
                 className={`absolute inset-0 h-full w-full scale-[1.12] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
@@ -155,6 +160,9 @@ function Hero() {
                 key={index}
                 src={item.src}
                 alt={`Hero visual ${index}`}
+                loading={isActive ? 'eager' : 'lazy'}
+                decoding="async"
+                fetchPriority={isActive ? 'high' : 'low'}
                 className={`absolute inset-0 h-full w-full scale-[1.12] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
               />
             );
@@ -427,16 +435,16 @@ function PopularCourses() {
   ];
 
   return (
-    <section className="bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFCF4_48%,#F5E6A8_100%)] py-24">
+    <section id="courses" className="bg-[linear-gradient(135deg,#F8FAFC_0%,#FFFCF4_48%,#F5E6A8_100%)] py-24">
       <div className="max-w-7xl mx-auto px-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-6">
           <div>
             <span className="text-xs font-bold text-indigo-600 uppercase tracking-widest mb-2 block">Trending Now</span>
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900">Explore popular courses</h2>
           </div>
-          <button onClick={() => navigate('gateway')} className="text-indigo-600 font-bold flex items-center gap-2 hover:gap-4 transition-all group">
+          <a href="/courses" className="text-indigo-600 font-bold flex items-center gap-2 hover:gap-4 transition-all group">
             View all courses <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
+          </a>
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -780,6 +788,16 @@ function DocumentationStandalonePage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-950">
+      {/* Render + Index: standalone documentation metadata and canonical. */}
+      <SEOHead
+        title="Documentation"
+        description="XE Academy documentation for students, creators, live sessions, billing, and developer API integrations."
+        path="/documentation"
+        type="article"
+        enableHreflang
+      />
+      {/* Index: documentation breadcrumb hierarchy for SERP breadcrumbs. */}
+      <JsonLd data={breadcrumbSchema([{ name: 'Home', path: '/' }, { name: 'Documentation', path: '/documentation' }])} />
       <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
         <div className="mx-auto flex h-16 w-full max-w-[1760px] items-center justify-between px-5 sm:px-8">
           <button onClick={() => navigateTo('/')} className="flex items-center gap-3 text-left">
@@ -884,10 +902,28 @@ export default function App() {
     return <DocumentationStandalonePage />;
   }
 
+  if (pathname === '/courses') {
+    return <PublicCourseCatalogPage />;
+  }
+
+  if (pathname.startsWith('/courses/')) {
+    return <PublicCourseDetailPage slug={decodeURIComponent(pathname.replace('/courses/', ''))} />;
+  }
+
   return (
     <NavigationContext.Provider value={{ navigate: navigateTo }}>
       {pathname !== '/gateway' ? (
         <div className="min-h-screen bg-white font-sans selection:bg-[#004BFF] selection:text-white">
+          {/* Render + Index: homepage metadata, canonical, OG, Twitter, hreflang. */}
+          <SEOHead
+            title="XE Academy — Where creators, brands & learners grow together"
+            titleOverride
+            description="Build courses, go live, and learn with a global academy for creators, brands, and ambitious students."
+            path="/"
+            enableHreflang
+          />
+          {/* Index: brand entity schema for knowledge graph consolidation. */}
+          <JsonLd data={organizationSchema()} />
           <Navbar />
           <main>
             <Hero />
