@@ -191,6 +191,7 @@ export default function CourseLearning({ setView }: Props) {
   const [volume, setVolume] = useState(0.78);
   const [activeTab, setActiveTab] = useState<ActiveTab>('notes');
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<Note[]>([
     {
@@ -240,6 +241,7 @@ export default function CourseLearning({ setView }: Props) {
     setPlaying(true);
 
     if (lesson.videoUrl !== currentVideoUrl) {
+      setIsBuffering(true);
       setCurrentVideoUrl(lesson.videoUrl);
       setPendingSeek(seekTime);
       return;
@@ -451,11 +453,29 @@ export default function CourseLearning({ setView }: Props) {
                 onReady={handlePlayerReady}
                 onPlay={() => setPlaying(true)}
                 onPause={() => setPlaying(false)}
-                onTimeUpdate={handleTimeUpdate}
+                onWaiting={() => setIsBuffering(true)}
+                onSeeking={() => setIsBuffering(true)}
+                onPlaying={() => setIsBuffering(false)}
+                onCanPlay={() => setIsBuffering(false)}
+                onSeeked={() => setIsBuffering(false)}
+                onTimeUpdate={(event: SyntheticEvent<HTMLVideoElement>) => {
+                  setIsBuffering(false);
+                  handleTimeUpdate(event);
+                }}
                 onDurationChange={handleDurationChange}
-                onEnded={() => setPlaying(false)}
+                onEnded={() => {
+                  setPlaying(false);
+                  setIsBuffering(false);
+                }}
                 style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
               />
+
+              {/* Custom buffering mask — covers YouTube's own spinner with our branded loader */}
+              {isBuffering && (
+                <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black">
+                  <span className="h-12 w-12 animate-spin rounded-full border-[3px] border-white/15 border-t-indigo-500" />
+                </div>
+              )}
 
               <div className="pointer-events-none absolute inset-x-0 top-0 z-10 h-20 bg-gradient-to-b from-black via-black/70 to-transparent" />
               <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 h-28 bg-gradient-to-t from-black via-black/95 to-transparent" />
@@ -466,7 +486,7 @@ export default function CourseLearning({ setView }: Props) {
                 aria-label={playing ? 'Pause video' : 'Play video'}
               />
 
-              {!playing && (
+              {!playing && !isBuffering && (
                 <button
                   onClick={() => setPlaying(true)}
                   className="absolute left-1/2 top-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 ring-8 ring-white/10 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"

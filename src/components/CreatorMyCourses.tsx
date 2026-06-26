@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { ChangeEvent, useMemo, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
   BookOpen,
@@ -85,6 +85,18 @@ export default function CreatorMyCourses({ setView }: Props) {
     thumbnail: thumbnails[0],
     status: 'Published' as CourseStatus,
   });
+  const [customThumbnail, setCustomThumbnail] = useState<string | null>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleCustomThumbnail = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file || !file.type.startsWith('image/')) return;
+    if (customThumbnail) URL.revokeObjectURL(customThumbnail);
+    const objectUrl = URL.createObjectURL(file);
+    setCustomThumbnail(objectUrl);
+    setDraft((current) => ({ ...current, thumbnail: objectUrl }));
+  };
 
   const stats = useMemo(
     () => [
@@ -102,6 +114,8 @@ export default function CreatorMyCourses({ setView }: Props) {
     setWizardOpen(false);
     setWizardStep(0);
     setDraft({ title: '', category: 'Development', thumbnail: thumbnails[0], status: 'Published' });
+    if (customThumbnail) URL.revokeObjectURL(customThumbnail);
+    setCustomThumbnail(null);
   };
 
   const publishCourse = () => {
@@ -287,17 +301,50 @@ export default function CreatorMyCourses({ setView }: Props) {
 
                 {wizardStep === 2 && (
                   <div>
-                    <h3 className="text-sm font-bold text-slate-900">Thumbnail Upload Simulation</h3>
+                    <h3 className="text-sm font-bold text-slate-900">Course Thumbnail</h3>
+                    <p className="mt-1 text-sm text-slate-500">Upload your own cover image, or pick one of our presets.</p>
+
+                    <input ref={thumbnailInputRef} type="file" accept="image/*" className="hidden" onChange={handleCustomThumbnail} />
+
+                    {customThumbnail ? (
+                      <div className="group relative mt-4 overflow-hidden rounded-2xl border-2 border-indigo-500 ring-4 ring-indigo-100">
+                        <img src={customThumbnail} alt="Your uploaded thumbnail" className="aspect-video w-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/50 to-transparent" />
+                        <span className="absolute left-3 top-3 rounded-full bg-indigo-600 px-2.5 py-1 text-[11px] font-bold text-white shadow">Your upload</span>
+                        <button
+                          onClick={() => thumbnailInputRef.current?.click()}
+                          className="absolute bottom-3 right-3 rounded-lg border border-white/30 bg-white/20 px-3 py-1.5 text-xs font-bold text-white backdrop-blur-md transition-all hover:bg-white/30 active:scale-95"
+                        >
+                          Replace
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => thumbnailInputRef.current?.click()}
+                        className="mt-4 flex w-full flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-8 text-center transition-colors hover:border-indigo-400 hover:bg-indigo-50/50"
+                      >
+                        <UploadCloud className="mb-2 h-10 w-10 text-slate-400" />
+                        <span className="text-sm font-bold text-slate-900">Upload your own thumbnail</span>
+                        <span className="mt-1 text-xs font-medium text-slate-500">PNG, JPG, or WebP · 16:9 recommended</span>
+                      </button>
+                    )}
+
+                    <div className="mt-5 flex items-center gap-3">
+                      <span className="h-px flex-1 bg-slate-100" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Or choose a preset</span>
+                      <span className="h-px flex-1 bg-slate-100" />
+                    </div>
+
                     <div className="mt-4 grid gap-3 sm:grid-cols-3">
                       {thumbnails.map((thumbnail) => (
-                        <button key={thumbnail} onClick={() => setDraft((current) => ({ ...current, thumbnail }))} className={`overflow-hidden rounded-2xl border transition-all active:scale-95 ${draft.thumbnail === thumbnail ? 'border-indigo-500 ring-4 ring-indigo-100' : 'border-slate-100'}`}>
+                        <button
+                          key={thumbnail}
+                          onClick={() => setDraft((current) => ({ ...current, thumbnail }))}
+                          className={`overflow-hidden rounded-2xl border transition-all active:scale-95 ${draft.thumbnail === thumbnail ? 'border-indigo-500 ring-4 ring-indigo-100' : 'border-slate-100 hover:border-indigo-200'}`}
+                        >
                           <img src={thumbnail} alt="Course thumbnail option" className="h-28 w-full object-cover" />
                         </button>
                       ))}
-                    </div>
-                    <div className="mt-4 rounded-2xl border border-dashed border-slate-200 bg-slate-50 p-5 text-center text-sm font-semibold text-slate-500">
-                      <UploadCloud className="mx-auto mb-2 text-slate-400" />
-                      Upload simulated. Choose a generated thumbnail above.
                     </div>
                   </div>
                 )}

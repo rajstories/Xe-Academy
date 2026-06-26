@@ -1,21 +1,33 @@
 import { ChangeEvent, DragEvent, RefObject, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useAuth } from '@clerk/clerk-react';
 import {
   ArrowLeft,
   CheckCircle2,
   Eye,
+  FileVideo,
   GripVertical,
-  Link,
   Loader2,
   PlayCircle,
   Plus,
+  RotateCcw,
   Save,
   Settings,
+  Trash2,
   UploadCloud,
   Video,
   X,
 } from 'lucide-react';
 import { View } from '../types';
+
+type UploadState = 'idle' | 'uploading' | 'processing' | 'done' | 'error';
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
+}
 
 interface Props {
   setView: (view: View) => void;
@@ -49,16 +61,8 @@ const initialModuleForm: ModuleFormState = {
   thumbnailUrl: '',
 };
 
-const isLikelyYouTubeUrl = (value: string) => {
-  try {
-    const url = new URL(value);
-    return ['youtube.com', 'www.youtube.com', 'youtu.be', 'www.youtu.be'].some((host) => url.hostname === host);
-  } catch {
-    return false;
-  }
-};
-
 export default function CourseBuilder({ setView }: Props) {
+  const { getToken } = useAuth();
   const [activeTab, setActiveTab] = useState<'details' | 'lessons'>('lessons');
   const [courseTitle, setCourseTitle] = useState('Advanced React Patterns');
   const [courseStatus, setCourseStatus] = useState('Draft');
@@ -95,14 +99,120 @@ export default function CourseBuilder({ setView }: Props) {
   const [isModulePanelOpen, setIsModulePanelOpen] = useState(false);
   const [moduleForm, setModuleForm] = useState<ModuleFormState>(initialModuleForm);
   const [isDraggingThumbnail, setIsDraggingThumbnail] = useState(false);
-  const [linkStatus, setLinkStatus] = useState<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
   const [isPublishing, setIsPublishing] = useState(false);
   const [toastMessage, setToastMessage] = useState('');
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const videoInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Video upload state (white-labeled — backed by the YouTube Data API server-side).
+  const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [uploadState, setUploadState] = useState<UploadState>('idle');
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState('');
+  const uploadXhrRef = useRef<XMLHttpRequest | null>(null);
 
   const updateForm = (key: keyof ModuleFormState, value: string) => {
     setModuleForm((current) => ({ ...current, [key]: value }));
-    if (key === 'videoUrl') setLinkStatus('idle');
+  };
+
+  const startVideoUpload = async (file: File) => {
+    setVideoFile(file);
+    setUploadError('');
+    setUploadProgress(0);
+    setUploadState('uploading');
+
+    try {
+      const token = await getToken();
+      const initResponse = await fetch('/api/youtube/create-upload', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          title: moduleForm.title.trim() || file.name.replace(/\.[^.]+$/, ''),
+          description: moduleForm.description.trim(),
+          contentType: file.type || 'video/*',
+          contentLength: file.size,
+        }),
+      });
+
+      const initData = await initResponse.json().catch(() => ({}));
+      if (!initResponse.ok) {
+        throw new Error(initData.error || 'Could not start the upload. Please try again.');
+      }
+      const uploadUrl: string = initData.uploadUrl;
+
+      const videoId = await new Promise<string>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        uploadXhrRef.current = xhr;
+        xhr.open('PUT', uploadUrl, true);
+        xhr.setRequestHeader('Content-Type', file.type || 'video/*');
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            const percent = Math.round((event.loaded / event.total) * 100);
+            setUploadProgress(percent);
+            if (percent >= 100) setUploadState('processing');
+          }
+        };
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              if (response.id) resolve(response.id);
+              else reject(new Error('Upload finished but no video id was returned.'));
+            } catch {
+              reject(new Error('Upload finished but the response could not be read.'));
+            }
+          } else {
+            reject(new Error(`Upload failed (status ${xhr.status}).`));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload. Verify the upload service configuration.'));
+        xhr.onabort = () => reject(new Error('Upload cancelled.'));
+        xhr.send(file);
+      });
+
+      const playbackUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      setModuleForm((current) => ({ ...current, videoUrl: playbackUrl }));
+      setUploadProgress(100);
+      setUploadState('done');
+    } catch (error) {
+      uploadXhrRef.current = null;
+      setUploadState('error');
+      setUploadError(error instanceof Error ? error.message : 'Upload failed. Please try again.');
+    }
+  };
+
+  const handleVideoInput = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (!file.type.startsWith('video/')) {
+      setUploadError('Please choose a video file.');
+      setUploadState('error');
+      return;
+    }
+    startVideoUpload(file);
+  };
+
+  const handleVideoDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('video/')) startVideoUpload(file);
+  };
+
+  const removeVideo = () => {
+    if (uploadXhrRef.current) {
+      uploadXhrRef.current.abort();
+      uploadXhrRef.current = null;
+    }
+    setVideoFile(null);
+    setUploadState('idle');
+    setUploadProgress(0);
+    setUploadError('');
+    setModuleForm((current) => ({ ...current, videoUrl: '' }));
   };
 
   const handleThumbnailFile = (file?: File) => {
@@ -125,19 +235,19 @@ export default function CourseBuilder({ setView }: Props) {
     handleThumbnailFile(event.dataTransfer.files?.[0]);
   };
 
-  const verifyVideoLink = () => {
-    setLinkStatus('checking');
-    window.setTimeout(() => {
-      setLinkStatus(isLikelyYouTubeUrl(moduleForm.videoUrl) ? 'valid' : 'invalid');
-    }, 700);
-  };
-
   const resetPanel = () => {
+    if (uploadXhrRef.current) {
+      uploadXhrRef.current.abort();
+      uploadXhrRef.current = null;
+    }
     setIsModulePanelOpen(false);
     setModuleForm(initialModuleForm);
     setIsDraggingThumbnail(false);
-    setLinkStatus('idle');
     setIsPublishing(false);
+    setVideoFile(null);
+    setUploadState('idle');
+    setUploadProgress(0);
+    setUploadError('');
   };
 
   const publishModule = () => {
@@ -318,7 +428,7 @@ export default function CourseBuilder({ setView }: Props) {
                 </div>
                 <h3 className="mt-5 text-xl font-bold tracking-tight text-slate-900">Build a polished learning sequence</h3>
                 <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
-                  Add modules with custom thumbnails and unlisted YouTube source links. Published modules become available in the student portal.
+                  Add modules with custom thumbnails and upload your lesson videos directly. Published modules become available in the student portal.
                 </p>
                 <button
                   onClick={() => setIsModulePanelOpen(true)}
@@ -338,9 +448,13 @@ export default function CourseBuilder({ setView }: Props) {
           <ModuleSlideOver
             form={moduleForm}
             isDraggingThumbnail={isDraggingThumbnail}
-            linkStatus={linkStatus}
             isPublishing={isPublishing}
             fileInputRef={fileInputRef}
+            videoInputRef={videoInputRef}
+            videoFile={videoFile}
+            uploadState={uploadState}
+            uploadProgress={uploadProgress}
+            uploadError={uploadError}
             onClose={resetPanel}
             onUpdate={updateForm}
             onDrop={handleDrop}
@@ -350,9 +464,12 @@ export default function CourseBuilder({ setView }: Props) {
             }}
             onDragLeave={() => setIsDraggingThumbnail(false)}
             onFileInput={handleThumbnailInput}
-            onVerify={verifyVideoLink}
             onPublish={publishModule}
             onBrowse={() => fileInputRef.current?.click()}
+            onVideoBrowse={() => videoInputRef.current?.click()}
+            onVideoInput={handleVideoInput}
+            onVideoDrop={handleVideoDrop}
+            onRemoveVideo={removeVideo}
           />
         )}
       </AnimatePresence>
@@ -379,35 +496,50 @@ export default function CourseBuilder({ setView }: Props) {
 function ModuleSlideOver({
   form,
   isDraggingThumbnail,
-  linkStatus,
   isPublishing,
   fileInputRef,
+  videoInputRef,
+  videoFile,
+  uploadState,
+  uploadProgress,
+  uploadError,
   onClose,
   onUpdate,
   onDrop,
   onDragOver,
   onDragLeave,
   onFileInput,
-  onVerify,
   onPublish,
   onBrowse,
+  onVideoBrowse,
+  onVideoInput,
+  onVideoDrop,
+  onRemoveVideo,
 }: {
   form: ModuleFormState;
   isDraggingThumbnail: boolean;
-  linkStatus: 'idle' | 'checking' | 'valid' | 'invalid';
   isPublishing: boolean;
   fileInputRef: RefObject<HTMLInputElement | null>;
+  videoInputRef: RefObject<HTMLInputElement | null>;
+  videoFile: File | null;
+  uploadState: UploadState;
+  uploadProgress: number;
+  uploadError: string;
   onClose: () => void;
   onUpdate: (key: keyof ModuleFormState, value: string) => void;
   onDrop: (event: DragEvent<HTMLDivElement>) => void;
   onDragOver: (event: DragEvent<HTMLDivElement>) => void;
   onDragLeave: () => void;
   onFileInput: (event: ChangeEvent<HTMLInputElement>) => void;
-  onVerify: () => void;
   onPublish: () => void;
   onBrowse: () => void;
+  onVideoBrowse: () => void;
+  onVideoInput: (event: ChangeEvent<HTMLInputElement>) => void;
+  onVideoDrop: (event: DragEvent<HTMLDivElement>) => void;
+  onRemoveVideo: () => void;
 }) {
-  const canPublish = form.title.trim().length > 0 && form.videoUrl.trim().length > 0;
+  const videoReady = uploadState === 'done' && form.videoUrl.trim().length > 0;
+  const canPublish = form.title.trim().length > 0 && videoReady && !isPublishing;
 
   return (
     <motion.div
@@ -496,31 +628,79 @@ function ModuleSlideOver({
           </section>
 
           <section className="space-y-4">
-            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">Video Source Linker</h3>
-            <div>
-              <label className="mb-1.5 block text-sm font-bold text-slate-900">Video Source URL (Unlisted YouTube Link)</label>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <div className="relative flex-1">
-                  <Link size={17} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                  <input
-                    value={form.videoUrl}
-                    onChange={(event) => onUpdate('videoUrl', event.target.value)}
-                    placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-900 outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-indigo-500/20"
-                  />
+            <h3 className="text-sm font-bold uppercase tracking-[0.14em] text-slate-400">Lesson Video</h3>
+            <input ref={videoInputRef} type="file" accept="video/*" className="hidden" onChange={onVideoInput} />
+
+            {uploadState === 'idle' && (
+              <div
+                onClick={onVideoBrowse}
+                onDrop={onVideoDrop}
+                onDragOver={(event) => event.preventDefault()}
+                className="cursor-pointer rounded-2xl border-2 border-dashed border-slate-300 bg-slate-50 p-10 text-center transition-colors hover:border-indigo-400 hover:bg-indigo-50/50"
+              >
+                <UploadCloud className="mx-auto h-12 w-12 text-slate-400" />
+                <p className="mt-4 text-sm font-bold text-slate-900">Drag &amp; drop your lesson video, or click to upload</p>
+                <p className="mt-1 text-xs font-medium text-slate-500">MP4, MOV, or WebM. Your video is hosted securely and streamed inside XE Academy.</p>
+              </div>
+            )}
+
+            {(uploadState === 'uploading' || uploadState === 'processing') && (
+              <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600">
+                    <FileVideo size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-slate-900">{videoFile?.name ?? 'Uploading video'}</p>
+                    <p className="text-xs font-medium text-slate-500">
+                      {videoFile ? formatBytes(videoFile.size) : ''}
+                      {uploadState === 'processing' ? ' · Finalizing…' : ` · ${uploadProgress}%`}
+                    </p>
+                  </div>
+                  <button onClick={onRemoveVideo} className="rounded-lg p-2 text-slate-400 transition-all hover:bg-slate-50 hover:text-rose-500 active:scale-95" aria-label="Cancel upload">
+                    <X size={18} />
+                  </button>
                 </div>
+                <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+                  <div className="h-full rounded-full bg-indigo-600 transition-all duration-200" style={{ width: `${uploadState === 'processing' ? 100 : uploadProgress}%` }} />
+                </div>
+                <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-indigo-600">
+                  <Loader2 size={13} className="animate-spin" />
+                  {uploadState === 'processing' ? 'Processing your video…' : 'Uploading…'}
+                </p>
+              </div>
+            )}
+
+            {uploadState === 'done' && (
+              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
+                <div className="flex items-center gap-3">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600">
+                    <CheckCircle2 size={20} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold text-slate-900">{videoFile?.name ?? 'Video uploaded'}</p>
+                    <p className="text-xs font-medium text-emerald-700">Ready — this video will stream inside the student portal.</p>
+                  </div>
+                  <button onClick={onRemoveVideo} className="rounded-lg p-2 text-slate-400 transition-all hover:bg-white hover:text-rose-500 active:scale-95" aria-label="Remove video">
+                    <Trash2 size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {uploadState === 'error' && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50/60 p-5">
+                <p className="text-sm font-bold text-rose-700">Upload failed</p>
+                <p className="mt-1 text-xs font-medium text-rose-600">{uploadError || 'Something went wrong. Please try again.'}</p>
                 <button
-                  onClick={onVerify}
-                  disabled={!form.videoUrl.trim() || linkStatus === 'checking'}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-bold text-slate-800 transition-all hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={onVideoBrowse}
+                  className="mt-3 inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2 text-sm font-bold text-rose-700 transition-all hover:bg-rose-50 active:scale-95"
                 >
-                  {linkStatus === 'checking' && <Loader2 size={16} className="animate-spin" />}
-                  Verify Link
+                  <RotateCcw size={15} /> Try again
                 </button>
               </div>
-              {linkStatus === 'valid' && <p className="mt-2 text-xs font-bold text-emerald-600">Verified YouTube source. Ready for white-labeled playback.</p>}
-              {linkStatus === 'invalid' && <p className="mt-2 text-xs font-bold text-rose-600">Please enter a valid YouTube or youtu.be URL.</p>}
-            </div>
+            )}
+
             <div>
               <label className="mb-1.5 block text-sm font-bold text-slate-900">Duration</label>
               <input

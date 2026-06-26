@@ -144,7 +144,7 @@ function Hero() {
                 playsInline
                 onEnded={handleVideoEnded}
                 src={item.src}
-                className={`absolute inset-0 h-full w-full scale-[1.04] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
+                className={`absolute inset-0 h-full w-full scale-[1.12] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
               />
             );
           } else {
@@ -153,11 +153,13 @@ function Hero() {
                 key={index}
                 src={item.src}
                 alt={`Hero visual ${index}`}
-                className={`absolute inset-0 h-full w-full scale-[1.04] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
+                className={`absolute inset-0 h-full w-full scale-[1.12] object-cover object-center transition-opacity duration-1000 ease-in-out ${isActive ? 'opacity-50' : 'opacity-0 pointer-events-none'}`}
               />
             );
           }
         })}
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-black via-black/80 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black via-black/80 to-transparent" />
       </div>
 
       <div className="relative z-20 w-full max-w-5xl mx-auto flex flex-col items-center text-center">
