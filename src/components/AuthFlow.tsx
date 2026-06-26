@@ -221,10 +221,16 @@ export function AuthFlow({ initialMode = 'sign-in', initialRole = null, onBackHo
     setError('');
     setLoading(true);
     try {
-      const result = await signUp.attemptEmailAddressVerification({ code: verificationCode });
-      if (result.status === 'complete') {
+      const alreadyVerified = signUp.verifications?.emailAddress?.status === 'verified';
+      const result = alreadyVerified ? signUp : await signUp.attemptEmailAddressVerification({ code: verificationCode });
+
+      if (result.status === 'complete' && result.createdSessionId) {
         await setSignUpActive({ session: result.createdSessionId });
         setMode('onboarding');
+      } else if (alreadyVerified) {
+        setError('Your email is verified — finish creating your account by signing in.');
+      } else {
+        setError('Verification could not be completed. Please request a new code and try again.');
       }
     } catch (err) {
       setError(extractClerkError(err));
