@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { PointerEvent, SyntheticEvent } from 'react';
 import {
   ArrowLeft,
@@ -196,6 +196,10 @@ export default function CourseLearning({ setView }: Props) {
   const [activeTab, setActiveTab] = useState<ActiveTab>('notes');
   const [playbackRate, setPlaybackRate] = useState(1);
   const [isBuffering, setIsBuffering] = useState(false);
+  // True once the video has rendered its first frame for the current source.
+  // Until then we keep an opaque cover up so YouTube's poster/logo never shows.
+  const [hasStarted, setHasStarted] = useState(false);
+  const bufferTimer = useRef<number | null>(null);
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<Note[]>([
     {
@@ -210,6 +214,10 @@ export default function CourseLearning({ setView }: Props) {
   const playerRef = useRef<PlayerHandle | null>(null);
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
   const isDraggingProgress = useRef(false);
+
+  useEffect(() => () => {
+    if (bufferTimer.current !== null) clearTimeout(bufferTimer.current);
+  }, []);
 
   const currentSeconds = played * duration;
   const completedLessons = useMemo(
@@ -238,6 +246,30 @@ export default function CourseLearning({ setView }: Props) {
     return typeof exactTime === 'number' && Number.isFinite(exactTime) ? exactTime : currentSeconds;
   };
 
+  // Show the buffering spinner only if the wait lasts longer than a moment.
+  // This stops the mask from rapidly flashing (blinking) when YouTube fires
+  // brief waiting/playing events back-to-back — most noticeable at 2x speed.
+  const startBuffering = () => {
+    if (bufferTimer.current !== null) return;
+    bufferTimer.current = window.setTimeout(() => {
+      setIsBuffering(true);
+      bufferTimer.current = null;
+    }, 280);
+  };
+
+  const stopBuffering = () => {
+    if (bufferTimer.current !== null) {
+      clearTimeout(bufferTimer.current);
+      bufferTimer.current = null;
+    }
+    setIsBuffering(false);
+  };
+
+  const markStarted = () => {
+    stopBuffering();
+    setHasStarted(true);
+  };
+
   const handleLessonSelect = (lesson: Lesson, seekTime = 0) => {
     setCurrentLesson(lesson);
     setDuration(lesson.durationSeconds);
@@ -245,7 +277,8 @@ export default function CourseLearning({ setView }: Props) {
     setPlaying(true);
 
     if (lesson.videoUrl !== currentVideoUrl) {
-      setIsBuffering(true);
+      setHasStarted(false);
+      stopBuffering();
       setCurrentVideoUrl(lesson.videoUrl);
       setPendingSeek(seekTime);
       return;
@@ -457,27 +490,30 @@ export default function CourseLearning({ setView }: Props) {
                 onReady={handlePlayerReady}
                 onPlay={() => setPlaying(true)}
                 onPause={() => setPlaying(false)}
-                onWaiting={() => setIsBuffering(true)}
-                onSeeking={() => setIsBuffering(true)}
-                onPlaying={() => setIsBuffering(false)}
-                onCanPlay={() => setIsBuffering(false)}
-                onSeeked={() => setIsBuffering(false)}
+                onWaiting={startBuffering}
+                onSeeking={startBuffering}
+                onPlaying={markStarted}
+                onCanPlay={markStarted}
+                onSeeked={stopBuffering}
                 onTimeUpdate={(event: SyntheticEvent<HTMLVideoElement>) => {
-                  setIsBuffering(false);
+                  markStarted();
                   handleTimeUpdate(event);
                 }}
                 onDurationChange={handleDurationChange}
                 onEnded={() => {
                   setPlaying(false);
-                  setIsBuffering(false);
+                  stopBuffering();
                 }}
                 style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
               />
 
-              {/* Custom buffering mask — covers YouTube's own spinner with our branded loader */}
-              {isBuffering && (
+              {/* Opaque cover — hides YouTube's poster/logo on first load and its
+                  spinner while buffering, replaced by our own branded loader. */}
+              {(!hasStarted || isBuffering) && (
                 <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center bg-black">
-                  <span className="h-12 w-12 animate-spin rounded-full border-[3px] border-white/15 border-t-indigo-500" />
+                  {(isBuffering || (playing && !hasStarted)) && (
+                    <span className="h-12 w-12 animate-spin rounded-full border-[3px] border-white/15 border-t-indigo-500" />
+                  )}
                 </div>
               )}
 
@@ -493,7 +529,7 @@ export default function CourseLearning({ setView }: Props) {
               {!playing && !isBuffering && (
                 <button
                   onClick={() => setPlaying(true)}
-                  className="absolute left-1/2 top-1/2 z-30 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 ring-8 ring-white/10 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
+                  className="absolute left-1/2 top-1/2 z-40 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 ring-8 ring-white/10 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
                   aria-label="Play video"
                 >
                   <Play size={34} className="ml-1 fill-current" />
