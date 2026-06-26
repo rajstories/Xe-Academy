@@ -111,6 +111,7 @@ export default function CreatorMyCourses({ setView }: Props) {
   const [wizardStep, setWizardStep] = useState(0);
   const [openMenuId, setOpenMenuId] = useState<number | null>(null);
   const [toast, setToast] = useState('');
+  const [isPublishing, setIsPublishing] = useState(false);
   const [draft, setDraft] = useState(emptyDraft);
   const [customThumbnail, setCustomThumbnail] = useState<string | null>(null);
   const thumbnailInputRef = useRef<HTMLInputElement | null>(null);
@@ -169,7 +170,7 @@ export default function CreatorMyCourses({ setView }: Props) {
     video.reset();
   };
 
-  const publishCourse = () => {
+  const publishCourse = async () => {
     const title = draft.title.trim();
     const videoUrl = video.videoUrl || draft.videoUrl;
     const price = draft.isFree ? 0 : Math.max(0, Number(draft.price) || 0);
@@ -188,17 +189,26 @@ export default function CreatorMyCourses({ setView }: Props) {
 
     // Publish to the shared catalog so students see it in Browse Courses (only when actually Published).
     if (draft.status === 'Published') {
-      publishToCatalog({
-        title,
-        description: draft.description.trim(),
-        category: draft.category,
-        thumbnail: draft.thumbnail,
-        creatorName: getFullName(user || undefined) || 'XE Creator',
-        price,
-        videoUrl,
-        lessons: videoUrl ? 1 : 0,
-      });
-      setToast(`“${title}” is now live in the student portal · Browse Courses`);
+      setIsPublishing(true);
+      try {
+        await publishToCatalog({
+          title,
+          description: draft.description.trim(),
+          category: draft.category,
+          thumbnail: draft.thumbnail,
+          creatorName: getFullName(user || undefined) || 'XE Creator',
+          price,
+          videoUrl,
+          lessons: videoUrl ? 1 : 0,
+        });
+        setToast(`“${title}” is now live in the student portal · Browse Courses`);
+      } catch (error) {
+        setIsPublishing(false);
+        setToast(error instanceof Error ? error.message : 'Could not publish to the student portal. Please try again.');
+        window.setTimeout(() => setToast(''), 3600);
+        return;
+      }
+      setIsPublishing(false);
     } else {
       setToast(`“${title}” saved as draft`);
     }
@@ -560,8 +570,13 @@ export default function CreatorMyCourses({ setView }: Props) {
                     {wizardStep === 3 && video.uploadState !== 'done' ? 'Upload a video to continue' : 'Continue'}
                   </button>
                 ) : (
-                  <button onClick={publishCourse} className="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition-all hover:shadow-lg active:scale-95">
-                    {draft.status === 'Published' ? 'Publish' : 'Save Draft'}
+                  <button
+                    onClick={publishCourse}
+                    disabled={isPublishing}
+                    className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-2.5 text-sm font-bold text-white transition-all hover:shadow-lg active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isPublishing && <Loader2 size={15} className="animate-spin" />}
+                    {isPublishing ? 'Publishing…' : draft.status === 'Published' ? 'Publish' : 'Save Draft'}
                   </button>
                 )}
               </div>

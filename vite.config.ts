@@ -170,9 +170,209 @@ function youtubeUploadChunkApi() {
   };
 }
 
+async function readJsonBody(req: any) {
+  const chunks: Buffer[] = [];
+  for await (const chunk of req) chunks.push(Buffer.from(chunk));
+  const raw = Buffer.concat(chunks).toString('utf8');
+  return raw ? JSON.parse(raw) : {};
+}
+
+async function kvGet(kvUrl: string, kvToken: string, key: string) {
+  const res = await fetch(`${kvUrl}/get/${key}`, { headers: { Authorization: `Bearer ${kvToken}` } });
+  const data = (await res.json().catch(() => ({}))) as { result?: string | null };
+  return data.result ? JSON.parse(data.result) : null;
+}
+
+async function kvSet(kvUrl: string, kvToken: string, key: string, value: unknown) {
+  return fetch(`${kvUrl}/set/${key}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${kvToken}` },
+    body: JSON.stringify(value),
+  });
+}
+
+async function verifyClerk(req: any): Promise<{ ok: boolean; userId?: string }> {
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey) return { ok: true };
+  const token = req.headers.authorization?.replace(/^Bearer\s+/i, '');
+  if (!token) return { ok: false };
+  try {
+    const { verifyToken } = await import('@clerk/backend');
+    const verified = await verifyToken(token, { secretKey });
+    return verified.sub ? { ok: true, userId: verified.sub } : { ok: false };
+  } catch {
+    return { ok: false };
+  }
+}
+
+// Dev-server mirror of api/courses/*.ts (Upstash Redis via Vercel KV) so the
+// creator→student course catalog and enrollments work the same locally.
+function coursesDevApi() {
+  return {
+    name: 'courses-dev-api',
+    configureServer(server: any) {
+      server.middlewares.use('/api/courses/list', async (req: any, res: any) => {
+        res.setHeader('Content-Type', 'application/json');
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method not allowed.' }));
+          return;
+        }
+        try {
+          const kvUrl = process.env.KV_REST_API_URL;
+          const kvToken = process.env.KV_REST_API_TOKEN;
+          if (!kvUrl || !kvToken) {
+            res.end(JSON.stringify({ catalog: [] }));
+            return;
+          }
+          const catalog = (await kvGet(kvUrl, kvToken, 'xe:catalog')) || [];
+          res.end(JSON.stringify({ catalog }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to load the catalog.' }));
+        }
+      });
+
+      server.middlewares.use('/api/courses/publish', async (req: any, res: any) => {
+        res.setHeader('Content-Type', 'application/json');
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method not allowed.' }));
+          return;
+        }
+        try {
+          const kvUrl = process.env.KV_REST_API_URL;
+          const kvToken = process.env.KV_REST_API_TOKEN;
+          if (!kvUrl || !kvToken) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: 'Course storage is not configured yet. Connect a KV/Redis store to this project in Vercel.' }));
+            return;
+          }
+          const auth = await verifyClerk(req);
+          if (!auth.ok) {
+            res.statusCode = 401;
+            res.end(JSON.stringify({ error: 'Missing or invalid session token. Please sign in again.' }));
+            return;
+          }
+          const body = await readJsonBody(req);
+          const title = (body.title || '').toString().trim();
+          if (!title) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'A course title is required.' }));
+            return;
+          }
+          const course = {
+            id: `c_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+            title,
+            description: (body.description || '').toString(),
+            category: (body.category || 'General').toString(),
+            thumbnail: (body.thumbnail || '').toString(),
+            creatorName: (body.creatorName || 'XE Creator').toString(),
+            price: Math.max(0, Number(body.price) || 0),
+            videoUrl: (body.videoUrl || '').toString(),
+            lessons: Math.max(0, Number(body.lessons) || 0),
+            publishedAt: Date.now(),
+          };
+          const current = (await kvGet(kvUrl, kvToken, 'xe:catalog')) || [];
+          const updated = [course, ...current];
+          const setRes = await kvSet(kvUrl, kvToken, 'xe:catalog', updated);
+          if (!setRes.ok) {
+            res.statusCode = 502;
+            res.end(JSON.stringify({ error: 'Failed to save the course to storage.', detail: await setRes.text() }));
+            return;
+          }
+          res.end(JSON.stringify({ course, catalog: updated }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to publish the course.' }));
+        }
+      });
+
+      server.middlewares.use('/api/courses/enroll', async (req: any, res: any) => {
+        res.setHeader('Content-Type', 'application/json');
+        if (req.method !== 'POST') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method not allowed.' }));
+          return;
+        }
+        try {
+          const kvUrl = process.env.KV_REST_API_URL;
+          const kvToken = process.env.KV_REST_API_TOKEN;
+          if (!kvUrl || !kvToken) {
+            res.statusCode = 500;
+            res.end(JSON.stringify({ error: 'Course storage is not configured yet. Connect a KV/Redis store to this project in Vercel.' }));
+            return;
+          }
+          const auth = await verifyClerk(req);
+          if (!auth.ok || !auth.userId) {
+            res.statusCode = 401;
+            res.end(JSON.stringify({ error: 'Missing or invalid session token. Please sign in again.' }));
+            return;
+          }
+          const body = await readJsonBody(req);
+          const courseId = (body.courseId || '').toString();
+          if (!courseId) {
+            res.statusCode = 400;
+            res.end(JSON.stringify({ error: 'A courseId is required.' }));
+            return;
+          }
+          const key = `xe:enroll:${auth.userId}`;
+          const current: string[] = (await kvGet(kvUrl, kvToken, key)) || [];
+          const updated = current.includes(courseId) ? current : [...current, courseId];
+          const setRes = await kvSet(kvUrl, kvToken, key, updated);
+          if (!setRes.ok) {
+            res.statusCode = 502;
+            res.end(JSON.stringify({ error: 'Failed to save the enrollment.', detail: await setRes.text() }));
+            return;
+          }
+          res.end(JSON.stringify({ enrolledIds: updated }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to enroll in this course.' }));
+        }
+      });
+
+      server.middlewares.use('/api/courses/enrollments', async (req: any, res: any) => {
+        res.setHeader('Content-Type', 'application/json');
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.end(JSON.stringify({ error: 'Method not allowed.' }));
+          return;
+        }
+        try {
+          const kvUrl = process.env.KV_REST_API_URL;
+          const kvToken = process.env.KV_REST_API_TOKEN;
+          if (!kvUrl || !kvToken) {
+            res.end(JSON.stringify({ enrolledIds: [] }));
+            return;
+          }
+          const auth = await verifyClerk(req);
+          if (!auth.ok || !auth.userId) {
+            res.end(JSON.stringify({ enrolledIds: [] }));
+            return;
+          }
+          const enrolledIds = (await kvGet(kvUrl, kvToken, `xe:enroll:${auth.userId}`)) || [];
+          res.end(JSON.stringify({ enrolledIds }));
+        } catch (error) {
+          res.statusCode = 500;
+          res.end(JSON.stringify({ error: error instanceof Error ? error.message : 'Failed to load enrollments.' }));
+        }
+      });
+    },
+  };
+}
+
 export default defineConfig(() => {
   return {
-    plugins: [react(), tailwindcss(), clerkMetadataApi(), youtubeUploadApi(), youtubeUploadChunkApi(), cleanHtmlUrls()],
+    plugins: [
+      react(),
+      tailwindcss(),
+      clerkMetadataApi(),
+      youtubeUploadApi(),
+      youtubeUploadChunkApi(),
+      coursesDevApi(),
+      cleanHtmlUrls(),
+    ],
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
