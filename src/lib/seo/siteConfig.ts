@@ -14,7 +14,7 @@ export const SITE = {
   defaultImage: '/og-image.png',
   twitter: '@xeacademy',
   description:
-    'Where creators, brands & learners grow together. Build courses, go live, and reach your audience with XE Academy.',
+    'Turn your knowledge into income. Create courses, host live sessions, and grow your audience with XE Academy — built for creators, brands & learners.',
 } as const;
 
 // SEO Step: INDEX (internationalization) — the locale table powers hreflang.
