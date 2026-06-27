@@ -2,6 +2,7 @@
 
 import { Bell, ChevronDown, LogOut, Menu } from 'lucide-react';
 import { useClerk, useUser } from '@clerk/clerk-react';
+import { useState, useRef, useEffect } from 'react';
 import { Role, View } from '../types';
 import { getUserDisplayName } from '../lib/auth';
 
@@ -18,6 +19,18 @@ export default function Header({ role, setRole, activeView, unreadCount, onNotif
   const { signOut } = useClerk();
   const { user } = useUser();
   const firstName = getUserDisplayName(user || undefined);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setProfileOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const getHeaderInfo = (view: string, currentRole: Role) => {
     if (view === 'help-support') {
@@ -101,8 +114,11 @@ export default function Header({ role, setRole, activeView, unreadCount, onNotif
           ) : null}
         </button>
 
-        <div className="relative group">
-          <button className="flex items-center gap-2 pl-1.5 pr-1.5 sm:pr-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium text-sm transition-colors hover:bg-primary/15">
+        <div className="relative" ref={profileRef}>
+          <button 
+            onClick={() => setProfileOpen(!profileOpen)}
+            className="flex items-center gap-2 pl-1.5 pr-1.5 sm:pr-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium text-sm transition-colors hover:bg-primary/15"
+          >
             {user?.hasImage ? (
               <img src={user.imageUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
             ) : (
@@ -111,20 +127,24 @@ export default function Header({ role, setRole, activeView, unreadCount, onNotif
               </span>
             )}
             <span className="capitalize hidden sm:inline">{role} Profile</span>
-            <ChevronDown size={16} className="hidden sm:block" />
+            <ChevronDown size={16} className={`hidden sm:block transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
           </button>
-          <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-            <button
-              onClick={async () => {
-                localStorage.removeItem('xe_active_role');
-                await signOut({ redirectUrl: '/' });
-              }}
-              className="flex w-full items-center gap-2 text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors font-medium"
-            >
-              <LogOut size={15} />
-              Log Out
-            </button>
-          </div>
+          
+          {profileOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border/50 py-1 z-50">
+              <button
+                onClick={async () => {
+                  setProfileOpen(false);
+                  localStorage.removeItem('xe_active_role');
+                  await signOut({ redirectUrl: '/' });
+                }}
+                className="flex w-full items-center gap-2 text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-50 transition-colors font-medium"
+              >
+                <LogOut size={15} />
+                Log Out
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>
