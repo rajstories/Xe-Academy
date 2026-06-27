@@ -562,9 +562,9 @@ function VideoRoomOverlay({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/90 flex items-center justify-center p-4 sm:p-8">
-      <div className="w-full max-w-6xl h-[85vh] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800 flex">
+      <div className="w-full max-w-6xl h-[90vh] md:h-[85vh] bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800 flex flex-col md:flex-row">
         {/* Main stage */}
-        <div className="flex-1 flex flex-col min-w-0">
+        <div className="flex-1 flex flex-col min-w-0 min-h-[40vh] md:min-h-0">
           <div className="flex items-center justify-between px-5 py-4 border-b border-slate-800 bg-slate-900/95">
             <div className="flex items-center gap-3 text-white min-w-0">
               <span className="px-2 py-1 bg-red-600 text-white text-xs font-bold rounded flex items-center gap-1 flex-shrink-0">
@@ -639,7 +639,7 @@ function VideoRoomOverlay({
         </div>
 
         {/* Live chat sidebar */}
-        <div className="w-72 sm:w-80 flex-shrink-0 border-l border-slate-800 bg-slate-900/60 flex flex-col">
+        <div className="w-full md:w-72 lg:w-80 flex-1 md:flex-none border-t md:border-t-0 md:border-l border-slate-800 bg-slate-900/60 flex flex-col min-h-0">
           <div className="flex items-center gap-2 px-4 py-4 border-b border-slate-800 text-white">
             <MessageSquare size={16} className="text-indigo-400" />
             <span className="font-semibold text-sm">Live Chat</span>

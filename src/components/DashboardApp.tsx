@@ -126,6 +126,7 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
 
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Sync to localStorage
   useEffect(() => {
@@ -369,7 +370,16 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 w-full text-left">
       {/* Sidebar */}
-      <Sidebar role={currentRouteRole} activeView={currentView} setActiveView={setActiveView} />
+      <Sidebar 
+        role={currentRouteRole} 
+        activeView={currentView} 
+        setActiveView={(view) => {
+          setActiveView(view);
+          setMobileMenuOpen(false);
+        }}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col h-full overflow-hidden relative">
@@ -379,6 +389,7 @@ export function DashboardApp({ initialRole = 'student' }: DashboardAppProps) {
           activeView={currentView}
           unreadCount={unreadCount}
           onNotificationsClick={() => setNotificationsOpen(true)}
+          setMobileMenuOpen={setMobileMenuOpen}
         />
 
         <main className={`flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth ${currentView === 'live-studio' || currentView === 'documentation' ? 'p-0 md:p-0' : ''}`}>

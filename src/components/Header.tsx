@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, ChevronDown, LogOut } from 'lucide-react';
+import { Bell, ChevronDown, LogOut, Menu } from 'lucide-react';
 import { useClerk, useUser } from '@clerk/clerk-react';
 import { Role, View } from '../types';
 import { getUserDisplayName } from '../lib/auth';
@@ -11,9 +11,10 @@ interface HeaderProps {
   activeView: View;
   unreadCount?: number;
   onNotificationsClick?: () => void;
+  setMobileMenuOpen?: (open: boolean) => void;
 }
 
-export default function Header({ role, setRole, activeView, unreadCount, onNotificationsClick }: HeaderProps) {
+export default function Header({ role, setRole, activeView, unreadCount, onNotificationsClick, setMobileMenuOpen }: HeaderProps) {
   const { signOut } = useClerk();
   const { user } = useUser();
   const firstName = getUserDisplayName(user || undefined);
@@ -70,15 +71,23 @@ export default function Header({ role, setRole, activeView, unreadCount, onNotif
   const { title, subtitle } = getHeaderInfo(activeView, role);
 
   return (
-    <header className="flex-shrink-0 bg-transparent flex items-center justify-between px-4 md:px-8 py-6 z-10 border-b border-border/10 mb-6">
-      <div>
-        <h2 className="text-2xl font-bold text-text-primary capitalize">
-          {title}
-        </h2>
-        <p className="text-sm text-text-secondary mt-1">{subtitle}</p>
+    <header className="flex-shrink-0 bg-transparent flex items-center justify-between px-4 md:px-8 py-4 md:py-6 z-10 border-b border-border/10 mb-6">
+      <div className="flex items-center gap-3">
+        <button
+          onClick={() => setMobileMenuOpen?.(true)}
+          className="md:hidden flex items-center justify-center p-2 -ml-2 rounded-xl text-text-primary hover:bg-black/5"
+        >
+          <Menu size={24} />
+        </button>
+        <div>
+          <h2 className="text-xl md:text-2xl font-bold text-text-primary capitalize leading-tight">
+            {title}
+          </h2>
+          <p className="hidden sm:block text-sm text-text-secondary mt-0.5">{subtitle}</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2 md:gap-4">
         <button
           onClick={onNotificationsClick}
           className="relative w-10 h-10 rounded-full hover:bg-black/5 flex items-center justify-center transition-colors"
@@ -93,7 +102,7 @@ export default function Header({ role, setRole, activeView, unreadCount, onNotif
         </button>
 
         <div className="relative group">
-          <button className="flex items-center gap-2.5 pl-1.5 pr-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium text-sm transition-colors hover:bg-primary/15">
+          <button className="flex items-center gap-2 pl-1.5 pr-1.5 sm:pr-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium text-sm transition-colors hover:bg-primary/15">
             {user?.hasImage ? (
               <img src={user.imageUrl} alt="" className="h-7 w-7 rounded-full object-cover" />
             ) : (
@@ -101,8 +110,8 @@ export default function Header({ role, setRole, activeView, unreadCount, onNotif
                 {role.slice(0, 2).toUpperCase()}
               </span>
             )}
-            <span className="capitalize">{role} Profile</span>
-            <ChevronDown size={16} />
+            <span className="capitalize hidden sm:inline">{role} Profile</span>
+            <ChevronDown size={16} className="hidden sm:block" />
           </button>
           <div className="absolute right-0 mt-2 w-48 bg-surface rounded-xl shadow-lg border border-border/50 py-1 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
             <button

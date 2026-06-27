@@ -48,7 +48,7 @@ function Navbar() {
           : 'bg-transparent border-b border-transparent py-6'
       }`}
     >
-      <div className="max-w-7xl mx-auto px-6 grid grid-cols-3 items-center">
+      <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-3 items-center">
         {/* Left Zone */}
         <div className="flex justify-start">
           <a href="#" className="flex items-center">
@@ -582,7 +582,7 @@ function CreatorSection() {
                   <h3 className="font-bold text-xl text-slate-900">Overview</h3>
                   <div className="bg-slate-100 rounded-full px-4 py-1.5 text-xs font-semibold text-slate-600">Last 30 Days</div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 md:gap-6 mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8">
                   <div className="p-5 md:p-6 rounded-2xl bg-indigo-50/50 border border-indigo-100/50">
                     <p className="text-xs text-slate-500 uppercase tracking-wider font-bold mb-2">Revenue</p>
                     <p className="text-2xl md:text-3xl font-extrabold text-indigo-600">$12,480</p>

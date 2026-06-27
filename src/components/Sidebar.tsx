@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { LayoutDashboard, BookOpen, Calendar, Users, User, Settings, Video, FileText, BarChart3, DollarSign, HelpCircle, BookText, Sparkles, Compass } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Role, View } from '../types';
 import { XeLogo } from './XeLogo';
 import { getFullName, getInitials } from '../lib/auth';
@@ -12,9 +13,11 @@ interface SidebarProps {
   role: Role;
   activeView: View;
   setActiveView: (view: View) => void;
+  mobileMenuOpen?: boolean;
+  setMobileMenuOpen?: (open: boolean) => void;
 }
 
-export default function Sidebar({ role, activeView, setActiveView }: SidebarProps) {
+export default function Sidebar({ role, activeView, setActiveView, mobileMenuOpen, setMobileMenuOpen }: SidebarProps) {
   const { user } = useUser();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const displayName = getFullName(user || undefined);
@@ -64,8 +67,8 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
 
   const planLabel = role === 'creator' ? 'Creator Pro' : role === 'admin' ? 'Admin Access' : 'Student Plan';
 
-  return (
-    <div className="w-[260px] flex-shrink-0 bg-surface border-r border-border flex flex-col h-full z-10 transition-all duration-300">
+  const sidebarContent = (
+    <div className="w-[260px] flex-shrink-0 bg-surface border-r border-border flex flex-col h-full z-40 transition-all duration-300 shadow-xl md:shadow-none">
       <div className="p-6">
         <div className="flex items-center">
           <XeLogo variant="full" theme="light" className="h-7 w-auto" />
@@ -157,5 +160,36 @@ export default function Sidebar({ role, activeView, setActiveView }: SidebarProp
 
       <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
     </div>
+  );
+
+  return (
+    <>
+      <div className="hidden md:block h-full">
+        {sidebarContent}
+      </div>
+
+      <AnimatePresence>
+        {mobileMenuOpen && (
+          <div className="fixed inset-0 z-50 flex md:hidden">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMobileMenuOpen?.(false)}
+              className="fixed inset-0 bg-slate-900/20 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              className="relative flex h-full"
+            >
+              {sidebarContent}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </>
   );
 }
