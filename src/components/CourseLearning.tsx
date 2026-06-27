@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import type { PointerEvent, SyntheticEvent } from 'react';
 import {
   ArrowLeft,
@@ -199,6 +199,8 @@ export default function CourseLearning({ setView }: Props) {
   // True once the video has rendered its first frame for the current source.
   // Until then we keep an opaque cover up so YouTube's poster/logo never shows.
   const [hasStarted, setHasStarted] = useState(false);
+  const [showControls, setShowControls] = useState(true);
+  const controlsTimeoutRef = useRef<number | null>(null);
   const bufferTimer = useRef<number | null>(null);
   const [noteText, setNoteText] = useState('');
   const [notes, setNotes] = useState<Note[]>([
@@ -217,6 +219,7 @@ export default function CourseLearning({ setView }: Props) {
 
   useEffect(() => () => {
     if (bufferTimer.current !== null) clearTimeout(bufferTimer.current);
+    if (controlsTimeoutRef.current !== null) clearTimeout(controlsTimeoutRef.current);
   }, []);
 
   const currentSeconds = played * duration;
@@ -248,6 +251,48 @@ export default function CourseLearning({ setView }: Props) {
           else if (typeof internalPlayer.pauseVideo === 'function') internalPlayer.pauseVideo();
         }
       }
+    }
+  };
+
+  const resetControlsTimeout = useCallback(() => {
+    if (controlsTimeoutRef.current !== null) {
+      clearTimeout(controlsTimeoutRef.current);
+    }
+    controlsTimeoutRef.current = window.setTimeout(() => {
+      setShowControls(false);
+    }, 3000);
+  }, []);
+
+  useEffect(() => {
+    if (playing) {
+      resetControlsTimeout();
+    } else {
+      setShowControls(true);
+      if (controlsTimeoutRef.current !== null) {
+        clearTimeout(controlsTimeoutRef.current);
+      }
+    }
+    return () => {
+      if (controlsTimeoutRef.current !== null) clearTimeout(controlsTimeoutRef.current);
+    };
+  }, [playing, resetControlsTimeout]);
+
+  const handleContainerPointerMove = () => {
+    if (playing) {
+      setShowControls(true);
+      resetControlsTimeout();
+    }
+  };
+
+  const handleVideoTap = () => {
+    if (!playing) {
+      togglePlay();
+    } else {
+      setShowControls((prev) => {
+        const next = !prev;
+        if (next) resetControlsTimeout();
+        return next;
+      });
     }
   };
 
@@ -486,6 +531,8 @@ export default function CourseLearning({ setView }: Props) {
             <section
               ref={playerContainerRef}
               className="group relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/10"
+              onPointerMove={handleContainerPointerMove}
+              onMouseLeave={() => playing && setShowControls(false)}
             >
               <div className="absolute inset-x-0 -inset-y-28 z-0">
                 <ReactPlayer
@@ -497,7 +544,7 @@ export default function CourseLearning({ setView }: Props) {
                   volume={volume}
                   playbackRate={playbackRate}
                   controls={false}
-                  playsinline={true}
+                  playsInline={true}
                   config={{
                     file: {
                       attributes: {
@@ -548,9 +595,9 @@ export default function CourseLearning({ setView }: Props) {
               )}
 
               <button
-                onClick={togglePlay}
+                onClick={handleVideoTap}
                 className="absolute inset-0 z-20 cursor-default bg-black/0"
-                aria-label={playing ? 'Pause video' : 'Play video'}
+                aria-label="Toggle video controls"
               />
 
               {!playing && !isBuffering && (
@@ -563,7 +610,7 @@ export default function CourseLearning({ setView }: Props) {
                 </button>
               )}
 
-              <div className={`absolute inset-x-0 bottom-0 z-40 p-5 transition-all duration-300 ${playing ? 'translate-y-3 opacity-0 group-hover:translate-y-0 group-hover:opacity-100' : 'translate-y-0 opacity-100'}`}>
+              <div className={`absolute inset-x-0 bottom-0 z-40 p-5 transition-all duration-300 ${showControls ? 'translate-y-0 opacity-100' : 'translate-y-3 opacity-0 pointer-events-none'}`}>
                 <div className="rounded-xl bg-slate-950/75 p-3 text-white shadow-2xl backdrop-blur-md">
                   <div
                     className="relative mb-3 h-1.5 cursor-pointer rounded-full bg-white/15"
