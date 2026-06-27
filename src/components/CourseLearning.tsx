@@ -231,6 +231,26 @@ export default function CourseLearning({ setView }: Props) {
   );
   const completion = Math.round((completedLessons / lessonCount) * 100);
 
+  const togglePlay = () => {
+    const nextPlaying = !playing;
+    setPlaying(nextPlaying);
+    
+    // Try to play/pause synchronously to satisfy iOS Safari's user gesture requirements
+    const player: any = playerRef.current;
+    if (player) {
+      const internalPlayer = typeof player.getInternalPlayer === 'function' ? player.getInternalPlayer() : null;
+      if (internalPlayer) {
+        if (nextPlaying) {
+          if (typeof internalPlayer.play === 'function') internalPlayer.play();
+          else if (typeof internalPlayer.playVideo === 'function') internalPlayer.playVideo();
+        } else {
+          if (typeof internalPlayer.pause === 'function') internalPlayer.pause();
+          else if (typeof internalPlayer.pauseVideo === 'function') internalPlayer.pauseVideo();
+        }
+      }
+    }
+  };
+
   const seekTo = (seconds: number) => {
     const nextTime = Math.max(0, Math.min(seconds, duration || currentLesson.durationSeconds));
     if (playerRef.current?.seekTo) {
@@ -528,14 +548,14 @@ export default function CourseLearning({ setView }: Props) {
               )}
 
               <button
-                onClick={() => setPlaying((isPlaying) => !isPlaying)}
-                className="absolute inset-0 z-20 cursor-default"
+                onClick={togglePlay}
+                className="absolute inset-0 z-20 cursor-default bg-black/0"
                 aria-label={playing ? 'Pause video' : 'Play video'}
               />
 
               {!playing && !isBuffering && (
                 <button
-                  onClick={() => setPlaying(true)}
+                  onClick={togglePlay}
                   className="absolute left-1/2 top-1/2 z-40 flex h-20 w-20 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-indigo-600 text-white shadow-2xl shadow-indigo-600/40 ring-8 ring-white/10 transition-all hover:scale-105 hover:bg-indigo-500 active:scale-95"
                   aria-label="Play video"
                 >
@@ -567,7 +587,7 @@ export default function CourseLearning({ setView }: Props) {
                   <div className="flex items-center justify-between gap-2 sm:gap-3">
                     <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                       <button
-                        onClick={() => setPlaying((isPlaying) => !isPlaying)}
+                        onClick={togglePlay}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all hover:bg-indigo-100 active:scale-95"
                         aria-label={playing ? 'Pause video' : 'Play video'}
                       >
