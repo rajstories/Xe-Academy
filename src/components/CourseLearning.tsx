@@ -465,7 +465,7 @@ export default function CourseLearning({ setView }: Props) {
           <main className="flex min-w-0 flex-col gap-6">
             <section
               ref={playerContainerRef}
-              className="group relative aspect-video min-h-[420px] overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/10"
+              className="group relative aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-[0_30px_80px_rgba(15,23,42,0.22)] ring-1 ring-slate-900/10"
             >
               <div className="absolute inset-x-0 -inset-y-28 z-0">
                 <ReactPlayer
@@ -477,7 +477,14 @@ export default function CourseLearning({ setView }: Props) {
                   volume={volume}
                   playbackRate={playbackRate}
                   controls={false}
+                  playsinline={true}
                   config={{
+                    file: {
+                      attributes: {
+                        playsInline: true,
+                        controlsList: 'nodownload',
+                      }
+                    },
                     youtube: {
                       playerVars: {
                         modestbranding: 1,
@@ -485,6 +492,7 @@ export default function CourseLearning({ setView }: Props) {
                         showinfo: 0,
                         controls: 0,
                         disablekb: 1,
+                        playsinline: 1,
                       },
                     },
                   } as any}
@@ -556,8 +564,8 @@ export default function CourseLearning({ setView }: Props) {
                     />
                   </div>
 
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="flex items-center justify-between gap-2 sm:gap-3">
+                    <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                       <button
                         onClick={() => setPlaying((isPlaying) => !isPlaying)}
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white text-slate-950 transition-all hover:bg-indigo-100 active:scale-95"
@@ -566,7 +574,7 @@ export default function CourseLearning({ setView }: Props) {
                         {playing ? <Pause size={18} className="fill-current" /> : <Play size={18} className="ml-0.5 fill-current" />}
                       </button>
 
-                      <div className="flex items-center gap-2">
+                      <div className="hidden sm:flex items-center gap-2">
                         <Volume2 size={18} className="text-white/80" />
                         <div
                           className="h-1.5 w-20 cursor-pointer rounded-full bg-white/15 sm:w-24"
@@ -584,7 +592,7 @@ export default function CourseLearning({ setView }: Props) {
                         </div>
                       </div>
 
-                      <span className="whitespace-nowrap text-xs font-medium tabular-nums text-white/80">
+                      <span className="whitespace-nowrap text-[10px] sm:text-xs font-medium tabular-nums text-white/80">
                         {formatTime(currentSeconds)} / {formatTime(duration)}
                       </span>
                     </div>

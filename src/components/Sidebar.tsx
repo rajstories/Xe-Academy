@@ -164,13 +164,13 @@ export default function Sidebar({ role, activeView, setActiveView, mobileMenuOpe
 
   return (
     <>
-      <div className="hidden md:block h-full">
+      <div className="hidden lg:block h-full">
         {sidebarContent}
       </div>
 
       <AnimatePresence>
         {mobileMenuOpen && (
-          <div className="fixed inset-0 z-50 flex md:hidden">
+          <div className="fixed inset-0 z-50 flex lg:hidden">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
