@@ -131,7 +131,7 @@ export default function CreatorLiveSessions({ setView }: Props) {
 
       <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
         <main className="flex flex-col gap-6">
-          <section className="aspect-video rounded-3xl bg-slate-950 flex flex-col justify-center items-center text-white relative overflow-hidden shadow-2xl shadow-slate-950/20">
+          <section className="min-h-[360px] md:min-h-0 aspect-auto md:aspect-video rounded-3xl bg-slate-950 flex flex-col justify-center items-center text-white relative overflow-hidden shadow-2xl shadow-slate-950/20 py-12 md:py-0">
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(99,102,241,0.35),transparent_35%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.25),transparent_30%)]" />
             <div className="absolute inset-x-6 top-6 z-10 flex items-center justify-between">
               <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] backdrop-blur-md">

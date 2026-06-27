@@ -171,7 +171,7 @@ export default function CreatorStudents({ setView }: Props) {
           <select
             value={courseFilter}
             onChange={(event) => setCourseFilter(event.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+            className="w-full lg:w-auto rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
           >
             {courses.map((course) => (
               <option key={course}>{course}</option>
@@ -180,7 +180,7 @@ export default function CreatorStudents({ setView }: Props) {
           <select
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value)}
-            className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+            className="w-full lg:w-auto rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 outline-none transition-all focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
           >
             {['All Statuses', 'Active', 'Completed', 'Inactive'].map((status) => (
               <option key={status}>{status}</option>
