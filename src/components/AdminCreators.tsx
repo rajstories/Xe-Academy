@@ -33,7 +33,7 @@ export default function AdminCreators({ setView }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
            <h3 className="text-slate-500 text-sm font-medium mb-1">Total Creators</h3>
            <p className="text-3xl font-bold text-slate-900">1,204</p>

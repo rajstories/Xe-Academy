@@ -205,7 +205,7 @@ export default function CreatorLiveSessions({ setView }: Props) {
           </section>
 
           {streamStatus === 'idle' && (
-            <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {idleMetrics.map(({ label, value, icon: MetricIcon }) => {
                 return (
                   <div key={label} className="rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">

@@ -269,7 +269,7 @@ export default function CreatorDashboard({ setView }: Props) {
       </motion.div>
 
       {/* Secondary metrics — equal weight, no decorative fake-progress bars. */}
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {secondaryMetrics.map((metric, index) => {
           const Icon = metric.icon;
           return (

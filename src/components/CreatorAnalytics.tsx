@@ -146,7 +146,7 @@ export default function CreatorAnalytics({ setView }: Props) {
           <Lightbulb className="text-primary" size={20} />
           <h3 className="font-bold text-text-primary">Quick Insights</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-text-secondary">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm text-text-secondary">
           <div className="flex items-start gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0" />
             <p><span className="font-medium text-text-primary">React Patterns</span> generated 42% of total revenue.</p>
@@ -343,7 +343,7 @@ export default function CreatorAnalytics({ setView }: Props) {
       </div>
 
       {/* Micro-Analytics Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-surface border border-border/50 rounded-2xl p-5 shadow-sm space-y-4">
           <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider flex items-center gap-2">
             <Activity size={16} className="text-blue-500" /> Student Engagement
