@@ -177,7 +177,7 @@ function Hero() {
         <h1
           className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-white leading-tight"
         >
-          <span className="inline-block whitespace-nowrap">
+          <span className="block md:inline-block md:whitespace-nowrap">
             Learn Smarter. Create Better.
           </span>
           <span className="block mt-1 text-[#FFD700]">Grow Global.</span>
