@@ -759,7 +759,7 @@ function Footer() {
 
         <div className="border-t border-slate-300 pt-10 flex flex-col md:flex-row items-center justify-end gap-6">
           <div className="text-sm font-medium text-slate-600">
-            @2026 all rights reserved
+            &copy; 2026 XE Academy (xeacademy.com). All rights reserved.
           </div>
         </div>
       </div>

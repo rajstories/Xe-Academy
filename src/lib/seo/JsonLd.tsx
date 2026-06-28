@@ -27,6 +27,9 @@ export function organizationSchema(opts?: { sameAs?: string[] }) {
     '@id': `${SITE.origin}/#organization`,
     name: SITE.name,
     legalName: SITE.legalName,
+    // Domain-as-one-word variant — helps Google associate the "xeacademy"
+    // query (no space) with the same entity as "XE Academy" / "XE.Academy".
+    alternateName: ['xeacademy', 'xeacademy.com', 'XE.Academy'],
     url: SITE.origin,
     logo: absoluteUrl('/brand/logo-icon-indigo.svg'),
     description: SITE.description,
